@@ -18,14 +18,24 @@
       --danger:#ff6b6b;
       --ok:#46e18a;
       --glass:rgba(255,255,255,0.06);
+      /* network palette */
+      --exec:#2ad0ca;
+      --salience:#ff9bd1;
+      --default:#7aa2ff;
+      --lang:#66d9ff;
+      --sensor:#46e18a;
+      --visual:#9ab6ff;
+      --auditory:#ffd166;
     }
     html,body{height:100%}
     *{box-sizing:border-box}
     body{
-      margin:0; background:radial-gradient(1200px 800px at 75% -10%, #101a3a 10%, transparent 60%),
-               radial-gradient(1000px 600px at -10% 20%, #0e1733 0%, transparent 55%),
-               var(--bg);
-      color:var(--ink); font:16px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      margin:0;
+      background:radial-gradient(1200px 800px at 75% -10%, #101a3a 10%, transparent 60%),
+                 radial-gradient(1000px 600px at -10% 20%, #0e1733 0%, transparent 55%),
+                 var(--bg);
+      color:var(--ink);
+      font:16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, Arial, sans-serif;
       overflow-x:hidden;
     }
     a{color:var(--teal); text-decoration:none}
@@ -49,9 +59,10 @@
     .sub{color:var(--muted); font-size:clamp(1rem, .9rem + .4vw, 1.2rem)}
 
     .cta-row{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:10px}
-    .btn{--bgc:var(--teal); --fg: #041016; display:inline-flex; align-items:center; gap:10px; padding:12px 18px; border-radius:14px; font-weight:600; background:var(--bgc); color:var(--fg); border:1px solid transparent; box-shadow:0 4px 18px rgba(42,208,202,.25); cursor:pointer}
+    .btn{--bgc:var(--teal); --fg:#041016; display:inline-flex; align-items:center; gap:10px; padding:12px 18px; border-radius:14px; font-weight:600; background:var(--bgc); color:var(--fg); border:1px solid transparent; box-shadow:0 4px 18px rgba(42,208,202,.25); cursor:pointer; transition:transform .2s ease, box-shadow .2s ease}
     .btn.secondary{--bgc:transparent; --fg:var(--ink); border-color:rgba(122,162,255,.2); box-shadow:inset 0 0 0 1px rgba(122,162,255,.2)}
     .btn:focus{outline:2px solid var(--gold); outline-offset:2px}
+    .btn.magnet-hover{transform:translate(var(--tx,0), var(--ty,0)); box-shadow:0 10px 24px rgba(42,208,202,.26)}
 
     /* Sticky nav */
     .nav{position:sticky; top:0; z-index:50; backdrop-filter:blur(12px); background:linear-gradient(180deg, rgba(10,14,30,.6), rgba(10,14,30,.25)); border-bottom:1px solid rgba(122,162,255,.15); display:flex; justify-content:center}
@@ -64,8 +75,9 @@
     /* Logo + inputs */
     .logo{display:inline-grid; place-items:center; width:26px; height:26px; border-radius:8px; background:linear-gradient(135deg, rgba(42,208,202,.25), rgba(122,162,255,.25)); color:var(--ink); box-shadow:0 2px 10px rgba(0,0,0,.3)}
     .logo svg{display:block}
-    .field{display:flex; gap:10px; flex-wrap:wrap}
+    .field{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
     .field input[type=email]{flex:1; min-width:220px; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:var(--ink)}
+    .field select{padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:var(--ink)}
     .hint{color:var(--muted); font-size:.95rem}
 
     /* Sections */
@@ -74,9 +86,9 @@
 
     /* Map grid */
     .map-grid{display:grid; grid-template-columns:1.05fr .95fr; gap:26px; align-items:center}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.14); border-radius:18px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.3); backdrop-filter:blur(10px)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.14); border-radius:18px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.3); backdrop-filter:blur(10px); position:relative}
 
-    .brainbox{position:relative; aspect-ratio:4/3; border-radius:18px; overflow:hidden}
+    .brainbox{position:relative; aspect-ratio:4/3; border-radius:18px; overflow:hidden; transform:perspective(900px) rotateX(var(--rx,0)) rotateY(var(--ry,0)); transition:transform .2s ease}
     .brainbox svg{position:absolute; inset:0; width:100%; height:100%}
     .legend{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px}
     .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:var(--glass)}
@@ -85,6 +97,27 @@
     .panel h3{margin:.3rem 0}
     .panel p{color:var(--muted)}
     .panel .actions{display:flex; gap:10px; margin-top:6px; flex-wrap:wrap}
+
+    /* Node styles */
+    .node .dot{stroke:rgba(255,255,255,.6); stroke-width:1.5; fill:var(--glass); opacity:.95; transition:opacity .2s ease, filter .2s ease}
+    .node text{font-size:12px; fill:var(--ink); opacity:.9; text-shadow:0 1px 2px rgba(0,0,0,.5)}
+    .node.active .dot{filter:drop-shadow(0 0 6px rgba(245,208,111,.6)); opacity:1}
+    .node:hover .dot{opacity:1}
+    .pathline{fill:none; stroke:var(--teal); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:6 10; animation:dash 2.4s linear infinite}
+    @keyframes dash{to{stroke-dashoffset:-200}}
+
+    .pulse{position:fixed; width:140px; height:140px; margin:-70px 0 0 -70px; border-radius:50%; border:2px solid rgba(245,208,111,.45); pointer-events:none; animation:pulse 1s ease-out forwards}
+    @keyframes pulse{from{opacity:.6; transform:scale(.2);} to{opacity:0; transform:scale(1.4);}}
+
+    .reveal{opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s ease}
+    .reveal.show{opacity:1; transform:translateY(0)}
+
+    #cursorOrb{position:fixed; width:240px; height:240px; top:0; left:0; pointer-events:none; mix-blend-mode:screen; background:radial-gradient(circle, rgba(122,162,255,.28) 0%, rgba(42,208,202,.05) 55%, transparent 70%); border-radius:50%; opacity:0; transition:opacity .4s ease}
+    body.interacting #cursorOrb{opacity:1}
+
+    .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
+
+    dialog::backdrop{background:rgba(7,12,26,.6)}
 
     /* Self-scan */
     .scan{display:grid; gap:12px}
@@ -98,8 +131,6 @@
     .story h4{margin:.2rem 0}
     .story p{color:var(--muted)}
 
-    .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
-
     /* Footer */
     footer{padding:40px 20px; color:var(--muted); text-align:center}
 
@@ -109,7 +140,7 @@
     /* Region styles */
     .region{cursor:pointer; outline:none}
     .region:focus{filter:drop-shadow(0 0 0.7rem rgba(245,208,111,.6))}
-    .region .fill{opacity:.18}
+    .region .fill{opacity:.18; transition:opacity .2s ease}
     .region:hover .fill{opacity:.28}
     .region.active .fill{opacity:.45}
     .region#emotion .fill{fill:var(--danger)}
@@ -121,13 +152,18 @@
     .region#social .fill{fill:#ff9bd1}
     .region#motivation .fill{fill:#ffa85c}
 
-    /* Accessibility & motion */
     @media (prefers-reduced-motion: reduce){
       .glow{display:none}
       [data-parallax]{transform:none !important}
+      .btn, .brainbox{transition:none}
+      .pathline{animation:none}
     }
     @media (max-width: 900px){
       .map-grid{grid-template-columns:1fr;}
+      .row{grid-template-columns:1fr 1fr; grid-template-areas:"label label" "range score"}
+      .row label{grid-area:label}
+      .row input{grid-area:range}
+      .row .score{grid-area:score}
     }
   </style>
 </head>
@@ -135,7 +171,7 @@
   <!-- Sticky Nav -->
   <nav class="nav" aria-label="Primary">
     <div class="nav-inner">
-      <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 64 64" width="22" height="22" role="img" aria-label="NeuroMap logo"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" style="stop-color:var(--teal)"/><stop offset="100%" style="stop-color:var(--violet)"/></linearGradient></defs><rect x="8" y="8" width="48" height="48" rx="11" ry="11" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.18)"/><path d="M22 42 V22 L42 42 V22" fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> NeuroMap Atlas</div>
+      <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 64 64" width="24" height="24" role="img" aria-label="NeuroMap logo"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" style="stop-color:var(--teal)"/><stop offset="100%" style="stop-color:var(--violet)"/></linearGradient></defs><rect x="8" y="8" width="48" height="48" rx="11" ry="11" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.18)"/><path d="M22 42 V22 L42 42 V22" fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> NeuroMap Atlas</div>
       <div class="spacer"></div>
       <a href="#map">Brain Map</a>
       <a href="#scan">Self-Scan</a>
@@ -144,6 +180,7 @@
       <a href="#contact">Contact</a>
     </div>
   </nav>
+  <div id="cursorOrb" aria-hidden="true"></div>
 
   <!-- HERO -->
   <header class="hero" role="banner">
@@ -171,49 +208,52 @@
       <div class="card brainbox" aria-describedby="map-desc">
         <svg viewBox="0 0 800 600" role="img" aria-labelledby="map-title map-desc">
           <title id="map-title">Interactive Brain Map</title>
-          <desc id="map-desc">Select a region to learn what it does and try a 2‑minute practice.</desc>
-
-          <!-- Soft background silhouette -->
+          <desc id="map-desc">Schematic left-hemisphere lateral view. Click a node to learn its role and try a 2‑minute practice. Not medical advice.</desc>
           <defs>
             <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
               <stop offset="0%" stop-color="#ffffff" stop-opacity="0.06"/>
               <stop offset="100%" stop-color="#ffffff" stop-opacity="0.01"/>
             </radialGradient>
           </defs>
-          <ellipse cx="400" cy="300" rx="320" ry="220" fill="url(#bgGrad)" />
-
-          <!-- Regions (stylized, not anatomical) -->
-          <g id="emotion" class="region" tabindex="0" role="button" aria-label="Emotion">
-            <circle class="fill" cx="275" cy="335" r="70"/>
-            <circle cx="275" cy="335" r="74" fill="none" stroke="rgba(255,255,255,.18)" />
+          <g id="brain">
+            <path id="brainSilhouette" d="M210,210 C245,140 360,120 470,160 C560,195 610,260 595,330 C580,395 520,430 470,440 C430,448 385,448 335,438 C285,428 245,405 225,370 C205,335 198,298 207,260 C212,238 198,235 210,210 Z" fill="url(#bgGrad)" stroke="rgba(255,255,255,.18)" stroke-width="2"/>
+            <ellipse cx="560" cy="410" rx="70" ry="48" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.18)"/>
           </g>
-          <g id="memory" class="region" tabindex="0" role="button" aria-label="Memory">
-            <circle class="fill" cx="360" cy="370" r="58"/>
-            <circle cx="360" cy="370" r="62" fill="none" stroke="rgba(255,255,255,.18)" />
-          </g>
-          <g id="attention" class="region" tabindex="0" role="button" aria-label="Attention">
-            <circle class="fill" cx="460" cy="250" r="80"/>
-            <circle cx="460" cy="250" r="84" fill="none" stroke="rgba(255,255,255,.18)" />
-          </g>
-          <g id="creativity" class="region" tabindex="0" role="button" aria-label="Creativity">
-            <circle class="fill" cx="360" cy="210" r="60"/>
-            <circle cx="360" cy="210" r="64" fill="none" stroke="rgba(255,255,255,.18)" />
-          </g>
-          <g id="decision" class="region" tabindex="0" role="button" aria-label="Decision‑Making">
-            <circle class="fill" cx="540" cy="325" r="65"/>
-            <circle cx="540" cy="325" r="69" fill="none" stroke="rgba(255,255,255,.18)" />
-          </g>
-          <g id="language" class="region" tabindex="0" role="button" aria-label="Language">
-            <circle class="fill" cx="235" cy="225" r="55"/>
-            <circle cx="235" cy="225" r="59" fill="none" stroke="rgba(255,255,255,.18)" />
-          </g>
-          <g id="social" class="region" tabindex="0" role="button" aria-label="Social">
-            <circle class="fill" cx="605" cy="235" r="58"/>
-            <circle cx="605" cy="235" r="62" fill="none" stroke="rgba(255,255,255,.18)" />
-          </g>
-          <g id="motivation" class="region" tabindex="0" role="button" aria-label="Motivation">
-            <circle class="fill" cx="470" cy="400" r="52"/>
-            <circle cx="470" cy="400" r="56" fill="none" stroke="rgba(255,255,255,.18)" />
+          <g id="pathLayer"></g>
+          <g id="nodes"></g>
+          <g id="regions">
+            <g id="emotion" class="region" tabindex="0" role="button" aria-label="Emotion">
+              <circle class="fill" cx="275" cy="335" r="70"/>
+              <circle cx="275" cy="335" r="74" fill="none" stroke="rgba(255,255,255,.18)" />
+            </g>
+            <g id="memory" class="region" tabindex="0" role="button" aria-label="Memory">
+              <circle class="fill" cx="360" cy="370" r="58"/>
+              <circle cx="360" cy="370" r="62" fill="none" stroke="rgba(255,255,255,.18)" />
+            </g>
+            <g id="attention" class="region" tabindex="0" role="button" aria-label="Attention">
+              <circle class="fill" cx="460" cy="250" r="80"/>
+              <circle cx="460" cy="250" r="84" fill="none" stroke="rgba(255,255,255,.18)" />
+            </g>
+            <g id="creativity" class="region" tabindex="0" role="button" aria-label="Creativity">
+              <circle class="fill" cx="360" cy="210" r="60"/>
+              <circle cx="360" cy="210" r="64" fill="none" stroke="rgba(255,255,255,.18)" />
+            </g>
+            <g id="decision" class="region" tabindex="0" role="button" aria-label="Decision-Making">
+              <circle class="fill" cx="540" cy="325" r="65"/>
+              <circle cx="540" cy="325" r="69" fill="none" stroke="rgba(255,255,255,.18)" />
+            </g>
+            <g id="language" class="region" tabindex="0" role="button" aria-label="Language">
+              <circle class="fill" cx="235" cy="225" r="55"/>
+              <circle cx="235" cy="225" r="59" fill="none" stroke="rgba(255,255,255,.18)" />
+            </g>
+            <g id="social" class="region" tabindex="0" role="button" aria-label="Social">
+              <circle class="fill" cx="605" cy="235" r="58"/>
+              <circle cx="605" cy="235" r="62" fill="none" stroke="rgba(255,255,255,.18)" />
+            </g>
+            <g id="motivation" class="region" tabindex="0" role="button" aria-label="Motivation">
+              <circle class="fill" cx="470" cy="400" r="52"/>
+              <circle cx="470" cy="400" r="56" fill="none" stroke="rgba(255,255,255,.18)" />
+            </g>
           </g>
         </svg>
         <div class="legend" aria-hidden="true">
@@ -229,11 +269,27 @@
       </div>
 
       <aside class="card panel" aria-live="polite">
-        <h3 id="panelTitle">Pick a region</h3>
-        <p id="panelDesc">Click a colored circle (or use Tab + Enter) to learn what that system does and try a 2‑minute micro‑practice.</p>
+        <h3 id="panelTitle">Pick a node</h3>
+        <p id="panelDesc">Click a labeled node to read what it does. Switch modes to view networks or feelings → pathways.</p>
         <div class="actions">
           <button class="btn" id="tryPractice" disabled>Do 2‑Minute Practice</button>
-          <button class="btn secondary" id="focusRegion" disabled>Highlight Region</button>
+          <button class="btn secondary" id="focusRegion" disabled>Highlight</button>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option value="anatomy">Anatomy</option>
+            <option value="networks">Networks</option>
+            <option value="feeling">Feeling → Pathway</option>
+          </select>
+          <select id="feeling" disabled>
+            <option value="">Choose feeling</option>
+            <option value="stress">Stress</option>
+            <option value="anxiety">Anxiety</option>
+            <option value="sadness">Sadness</option>
+            <option value="focus">Focus</option>
+            <option value="creativity">Creative Flow</option>
+          </select>
         </div>
       </aside>
     </div>
@@ -241,7 +297,7 @@
 
   <!-- SELF SCAN -->
   <section id="scan" aria-labelledby="scan-title">
-    <div class="wrap card">
+    <div class="wrap card reveal">
       <h2 id="scan-title">2‑Minute Self‑Scan</h2>
       <p class="sub">Slide to rate how you feel right now. We’ll highlight the system to focus on and suggest a micro‑practice.</p>
       <div class="scan" role="form" aria-describedby="scan-help">
@@ -265,17 +321,17 @@
   <!-- STORIES -->
   <section id="stories" aria-labelledby="stories-title">
     <div class="wrap">
-      <h2 id="stories-title">Stories & Insights</h2>
+      <h2 id="stories-title" class="reveal">Stories & Insights</h2>
       <div class="grid">
-        <article class="story">
+        <article class="story reveal">
           <h4>Why micro‑practices beat willpower</h4>
           <p>Two minutes is enough to change the loop your brain is in—because state shift precedes belief change.</p>
         </article>
-        <article class="story">
+        <article class="story reveal">
           <h4>Attention as a trainable sense</h4>
           <p>A simple breath‑count drill improves sustained attention in under 120 seconds—try it before email.</p>
         </article>
-        <article class="story">
+        <article class="story reveal">
           <h4>Memory needs spacing</h4>
           <p>Most “forgetting” is timing, not talent. Spaced recall + zero‑pressure prompts keep knowledge alive.</p>
         </article>
@@ -285,19 +341,19 @@
 
   <!-- CONTACT -->
   <section id="contact" aria-labelledby="contact-title">
-    <div class="wrap card">
+    <div class="wrap card reveal">
       <h2 id="contact-title">Contact</h2>
-      <p>Want to collaborate or contribute a practice? Email <a href="mailto:you@example.com">you@example.com</a>. This is a learning resource, not medical advice.</p>
+      <p>Want to collaborate or contribute a practice? Email <a href="mailto:info@recursive-emergence.org">info@recursive-emergence.org</a>. This is a learning resource, not medical advice.</p>
     </div>
   </section>
 
   <!-- SUBSCRIBE -->
   <section id="subscribe" aria-labelledby="subscribe-title">
-    <div class="wrap card">
+    <div class="wrap card reveal">
       <h2 id="subscribe-title">Subscribe for New Brain Maps</h2>
       <p class="hint">Free, occasional updates. No spam. Your email stays private.</p>
       <div class="field" role="form" aria-label="Subscribe form">
-        <input id="subEmail" type="email" placeholder="you@example.com" required />
+        <input id="subEmail" type="email" placeholder="info@recursive-emergence.org" required />
         <button class="btn" id="subBtn">Subscribe</button>
         <button class="btn secondary" id="subAlt">Just email me</button>
       </div>
@@ -321,7 +377,6 @@
   </dialog>
 
   <script>
-    // ===== UTIL =====
     const $ = (sel, el=document) => el.querySelector(sel);
     const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
 
@@ -335,7 +390,9 @@
       let w, h, dpr = Math.min(2, window.devicePixelRatio || 1);
       let points = [];
       function resize(){
-        w = c.clientWidth; h = c.clientHeight; c.width = w*dpr; c.height = h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+        w = c.clientWidth; h = c.clientHeight;
+        c.width = w*dpr; c.height = h*dpr;
+        ctx.setTransform(dpr,0,0,dpr,0,0);
         points = new Array(90).fill().map(()=>({
           x: Math.random()*w, y: Math.random()*h,
           vx: (Math.random()-.5)*0.6, vy: (Math.random()-.5)*0.6,
@@ -346,14 +403,12 @@
       window.addEventListener('resize', resize);
       function step(){
         ctx.clearRect(0,0,w,h);
-        // draw & move points
         for(const p of points){
           p.x+=p.vx; p.y+=p.vy;
           if(p.x<0||p.x>w) p.vx*=-1; if(p.y<0||p.y>h) p.vy*=-1;
           ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
           ctx.fillStyle='rgba(122,162,255,.55)'; ctx.fill();
         }
-        // connections
         for(let i=0;i<points.length;i++){
           for(let j=i+1;j<points.length;j++){
             const a=points[i], b=points[j];
@@ -378,22 +433,26 @@
       if(!els.length) return;
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
       if(reduce.matches) return;
-      const onScroll = () => {
-        const y = window.scrollY || 0;
+      let targetY = 0, currentY = 0;
+      const onScroll = ()=>{ targetY = window.scrollY || 0; };
+      const raf = ()=>{
+        currentY += (targetY - currentY) * 0.08;
         els.forEach(el=>{
           const speed = parseFloat(el.getAttribute('data-speed')||'0');
-          el.style.transform = `translateY(${y*speed}px)`;
+          el.style.transform = `translateY(${currentY*speed}px)`;
         });
+        requestAnimationFrame(raf);
       };
       onScroll();
       document.addEventListener('scroll', onScroll, {passive:true});
+      raf();
     })();
 
-    // ===== INTERACTIVE MAP =====
+    // ===== REGIONS & PRACTICES =====
     const regions = {
       emotion: {
         title: 'Emotion',
-        desc: 'Your body’s quick meaning‑maker. Name it to tame it; breath shapes the signal.',
+        desc: 'Your body’s quick meaning-maker. Name it to tame it; breath shapes the signal.',
         practice: `Box Breath (2 min): Inhale 4 · Hold 4 · Exhale 4 · Hold 4 — repeat 8 cycles. As you exhale, softly label the feeling (e.g., “restless,” “tight,” “calm”).`
       },
       memory: {
@@ -412,28 +471,75 @@
         practice: `Associative Burst (2 min): Pick an object near you. List 10 alternate uses in 120 seconds. Do not edit; go for volume.`
       },
       decision: {
-        title: 'Decision‑Making',
+        title: 'Decision-Making',
         desc: 'Clarity comes from comparing futures, not arguments. Make options visible.',
-        practice: `Two‑Futures Flip (2 min): Name Choice A vs B. For each, speak one sentence: “Six months from now, I will be…”. Pick the calmer body answer.`
+        practice: `Two-Futures Flip (2 min): Name Choice A vs B. For each, speak one sentence: “Six months from now, I will be…”. Pick the calmer body answer.`
       },
       language: {
         title: 'Language',
         desc: 'Words shape attention. Clear phrasing reduces cognitive load and improves recall.',
-        practice: `Rename It (2 min): Take a complex idea you’re using today. Rewrite it in one short, concrete sentence a 10‑year‑old could follow.`
+        practice: `Rename It (2 min): Take a complex idea you’re using today. Rewrite it in one short, concrete sentence a 10-year-old could follow.`
       },
       social: {
         title: 'Social',
-        desc: 'Regulation is co‑regulation. A calm voice and eye focus can shift your state in seconds.',
-        practice: `30‑Second Co‑Reg (2 min): Call or voice‑note a friend. Slow your voice, 6‑second exhale. Name one appreciation.`
+        desc: 'Regulation is co-regulation. A calm voice and eye focus can shift your state in seconds.',
+        practice: `30-Second Co-Reg (2 min): Call or voice-note a friend. Slow your voice, 6-second exhale. Name one appreciation.`
       },
       motivation: {
         title: 'Motivation',
         desc: 'Tiny starts beat big plans. Lower the bar and raise consistency.',
-        practice: `Starter Step (2 min): Choose one task. Define a 60‑second first move (open doc, title it). Do that now; then decide the next tile.`
+        practice: `Starter Step (2 min): Choose one task. Define a 60-second first move (open doc, title it). Do that now; then decide the next tile.`
       }
     };
 
-    let currentRegion = null;
+    const atlas = {
+      nodes: {
+        dlPFC:{ x:300, y:180, label:'dlPFC', name:'Dorsolateral Prefrontal Cortex', networks:['Executive Control'], lobe:'Frontal', desc:'Working memory, planning, top-down control.', practiceKey:'decision', color:'var(--exec)' },
+        mPFC:{ x:350, y:200, label:'mPFC', name:'Medial Prefrontal Cortex', networks:['Default Mode'], lobe:'Frontal', desc:'Self-referential thought, valuation.', practiceKey:'emotion', color:'var(--default)' },
+        ACC:{ x:360, y:240, label:'ACC', name:'Anterior Cingulate', networks:['Executive Control','Salience'], lobe:'Cingulate', desc:'Conflict monitoring, error detection.', practiceKey:'attention', color:'var(--exec)' },
+        Insula:{ x:420, y:300, label:'Insula', name:'Insula', networks:['Salience'], lobe:'Insular', desc:'Interoception, body-state awareness.', practiceKey:'emotion', color:'var(--salience)' },
+        Amygdala:{ x:450, y:360, label:'Amygdala', name:'Amygdala', networks:['Salience'], lobe:'Medial Temporal', desc:'Rapid threat/emotion tagging.', practiceKey:'emotion', color:'var(--salience)' },
+        Hippocampus:{ x:420, y:380, label:'Hipp', name:'Hippocampus', networks:['Default Mode'], lobe:'Medial Temporal', desc:'Encoding contexts, memory consolidation.', practiceKey:'memory', color:'var(--default)' },
+        Thalamus:{ x:380, y:300, label:'Thal', name:'Thalamus', networks:['Salience','Executive Control'], lobe:'Subcortical', desc:'Sensory relay and gating.', practiceKey:'attention', color:'var(--salience)' },
+        PCC:{ x:430, y:230, label:'PCC', name:'Posterior Cingulate', networks:['Default Mode'], lobe:'Cingulate', desc:'Context, autobiographical memory.', practiceKey:'creativity', color:'var(--default)' },
+        V1:{ x:575, y:260, label:'V1', name:'Primary Visual (V1)', networks:['Visual'], lobe:'Occipital', desc:'Early visual processing.', practiceKey:'attention', color:'var(--visual)' },
+        A1:{ x:480, y:300, label:'A1', name:'Primary Auditory (A1)', networks:['Auditory'], lobe:'Temporal', desc:'Sound features and timing.', practiceKey:'attention', color:'var(--auditory)' },
+        Motor:{ x:360, y:170, label:'M1', name:'Primary Motor (M1)', networks:['Sensorimotor'], lobe:'Frontal', desc:'Voluntary movement output.', practiceKey:'motivation', color:'var(--sensor)' },
+        Somatosensory:{ x:395, y:170, label:'S1', name:'Somatosensory (S1)', networks:['Sensorimotor'], lobe:'Parietal', desc:'Touch and body map.', practiceKey:'emotion', color:'var(--sensor)' },
+        Broca:{ x:330, y:260, label:'Broca', name:'Broca’s Area', networks:['Language'], lobe:'Frontal (IFG)', desc:'Speech production and syntax planning.', practiceKey:'language', color:'var(--lang)' },
+        Wernicke:{ x:480, y:240, label:'Wern', name:'Wernicke’s Area', networks:['Language'], lobe:'Temporal (STG/TPJ)', desc:'Language comprehension.', practiceKey:'language', color:'var(--lang)' },
+        PPC:{ x:460, y:200, label:'PPC', name:'Posterior Parietal', networks:['Executive Control'], lobe:'Parietal', desc:'Attention re-orienting, spatial maps.', practiceKey:'attention', color:'var(--exec)' },
+        Cerebellum:{ x:560, y:400, label:'Cereb', name:'Cerebellum', networks:['Sensorimotor'], lobe:'Cerebellar', desc:'Timing, error correction, automatization.', practiceKey:'motivation', color:'var(--sensor)' }
+      },
+      feelings: {
+        stress: ['Amygdala','Insula','ACC','dlPFC'],
+        anxiety: ['Amygdala','Hippocampus','mPFC','dlPFC'],
+        sadness: ['mPFC','Amygdala','PCC','Hippocampus'],
+        focus: ['dlPFC','ACC','Thalamus','PPC'],
+        creativity: ['mPFC','PCC','Wernicke','V1']
+      },
+      networks: {
+        'Executive Control': ['dlPFC','ACC','PPC'],
+        'Salience': ['Insula','ACC','Amygdala','Thalamus'],
+        'Default Mode': ['mPFC','PCC','Hippocampus'],
+        'Language': ['Broca','Wernicke'],
+        'Sensorimotor': ['Motor','Somatosensory','Cerebellum'],
+        'Visual': ['V1'],
+        'Auditory': ['A1']
+      }
+    };
+
+    const categoryToNodes = {
+      emotion:['Amygdala','Insula','mPFC','ACC'],
+      memory:['Hippocampus','PCC','Thalamus'],
+      attention:['dlPFC','ACC','PPC','Thalamus'],
+      creativity:['mPFC','PCC','Wernicke','V1'],
+      decision:['dlPFC','ACC','PPC'],
+      language:['Broca','Wernicke'],
+      social:['Insula','Amygdala','mPFC','ACC'],
+      motivation:['dlPFC','Cerebellum','Motor']
+    };
+
     const panelTitle = document.getElementById('panelTitle');
     const panelDesc = document.getElementById('panelDesc');
     const tryBtn = document.getElementById('tryPractice');
@@ -442,21 +548,119 @@
     const practiceTitle = document.getElementById('practiceTitle');
     const practiceText = document.getElementById('practiceText');
 
-    function selectRegion(id){
-      currentRegion = id;
-      $$('.region').forEach(g=>g.classList.toggle('active', g.id===id));
-      const data = regions[id];
-      panelTitle.textContent = data.title;
-      panelDesc.textContent = `${data.desc}`;
-      tryBtn.disabled = false; focusBtn.disabled = false;
+    let currentRegion = null;
+    let currentNode = null;
+
+    const nodesLayer = document.getElementById('nodes');
+    const pathLayer = document.getElementById('pathLayer');
+
+    for(const [id, node] of Object.entries(atlas.nodes)){
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('class','node');
+      g.setAttribute('data-id', id);
+      g.setAttribute('tabindex','0');
+      g.setAttribute('role','button');
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('class','dot');
+      c.setAttribute('cx', node.x);
+      c.setAttribute('cy', node.y);
+      c.setAttribute('r','6');
+      c.setAttribute('stroke', node.color);
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x', node.x + 10);
+      t.setAttribute('y', node.y + 4);
+      t.textContent = node.label;
+      g.appendChild(c);
+      g.appendChild(t);
+      g.addEventListener('click', ()=>selectNode(id));
+      g.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectNode(id);} });
+      nodesLayer.appendChild(g);
     }
 
-    $$('.region').forEach(g=>{
-      g.addEventListener('click', ()=>selectRegion(g.id));
+    function neutralNodes(){
+      $$('#nodes .node .dot').forEach(el=>{
+        const id = el.parentElement.getAttribute('data-id');
+        el.setAttribute('stroke', atlas.nodes[id].color);
+      });
+      drawPath(null);
+    }
+
+    function colorByNetworks(){
+      $$('#nodes .node .dot').forEach(el=>{
+        const id = el.parentElement.getAttribute('data-id');
+        const node = atlas.nodes[id];
+        const net = node.networks[0] || 'Executive Control';
+        const color = net==='Executive Control'? 'var(--exec)'
+          : net==='Salience'? 'var(--salience)'
+          : net==='Default Mode'? 'var(--default)'
+          : net==='Language'? 'var(--lang)'
+          : net==='Sensorimotor'? 'var(--sensor)'
+          : net==='Visual'? 'var(--visual)'
+          : net==='Auditory'? 'var(--auditory)'
+          : 'var(--teal)';
+        el.setAttribute('stroke', color);
+      });
+      drawPath(null);
+    }
+
+    function drawPath(sequence){
+      pathLayer.innerHTML='';
+      $$('#nodes .node').forEach(node=> node.classList.toggle('active', false));
+      if(!sequence || !sequence.length) return;
+      const points = sequence.map(key => atlas.nodes[key]).filter(Boolean);
+      if(!points.length) return;
+      const d = points.map((p, i)=> `${i?'L':'M'}${p.x} ${p.y}`).join(' ');
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', d);
+      path.setAttribute('class','pathline');
+      pathLayer.appendChild(path);
+      $$('#nodes .node').forEach(node=>{
+        const id = node.getAttribute('data-id');
+        node.classList.toggle('active', sequence.includes(id));
+      });
+    }
+
+    function selectNode(id){
+      const node = atlas.nodes[id];
+      if(!node) return;
+      currentNode = id;
+      currentRegion = null;
+      $$('#regions .region').forEach(el=>el.classList.remove('active'));
+      $$('#nodes .node').forEach(el=>el.classList.toggle('active', el.getAttribute('data-id')===id));
+      panelTitle.textContent = node.name;
+      panelDesc.textContent = `${node.desc} (${node.lobe}; networks: ${node.networks.join(', ')})`;
+      tryBtn.disabled = false;
+      focusBtn.disabled = false;
+    }
+
+    function selectRegion(id){
+      const data = regions[id];
+      if(!data) return;
+      currentRegion = id;
+      currentNode = null;
+      $$('#regions .region').forEach(g=>g.classList.toggle('active', g.id===id));
+      $$('#nodes .node').forEach(node=>node.classList.remove('active'));
+      panelTitle.textContent = data.title;
+      panelDesc.textContent = data.desc;
+      tryBtn.disabled = false;
+      focusBtn.disabled = false;
+      pulseAtRegion(id);
+    }
+
+    $$('#regions .region').forEach(g=>{
+      g.addEventListener('click', ()=> selectRegion(g.id));
       g.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectRegion(g.id);} });
     });
 
     tryBtn.addEventListener('click', ()=>{
+      if(currentNode){
+        const node = atlas.nodes[currentNode];
+        const key = node.practiceKey || 'attention';
+        practiceTitle.textContent = `${node.name}: 2‑Minute Practice`;
+        practiceText.textContent = regions[key]?.practice || 'Breathe slow 6-second exhales for 2 minutes; label the sensation once per breath.';
+        modal.showModal();
+        return;
+      }
       if(!currentRegion) return;
       practiceTitle.textContent = `${regions[currentRegion].title}: 2‑Minute Practice`;
       practiceText.textContent = regions[currentRegion].practice;
@@ -464,18 +668,73 @@
     });
 
     focusBtn.addEventListener('click', ()=>{
-      if(!currentRegion) return;
-      const el = document.getElementById(currentRegion);
-      el.scrollIntoView({behavior:'smooth', block:'center', inline:'center'});
+      if(currentRegion){
+        const el = document.getElementById(currentRegion);
+        el?.scrollIntoView({behavior:'smooth', block:'center', inline:'center'});
+        pulseAtRegion(currentRegion);
+      } else if(currentNode){
+        const nodeEl = $(`#nodes .node[data-id="${currentNode}"] .dot`);
+        if(nodeEl){
+          const rect = nodeEl.getBoundingClientRect();
+          window.scrollTo({top: window.scrollY + rect.top - window.innerHeight/2, behavior:'smooth'});
+        }
+      }
     });
 
+    const modeSel = document.getElementById('mode');
+    const feelingSel = document.getElementById('feeling');
+
+    modeSel.addEventListener('change', ()=>{
+      const mode = modeSel.value;
+      if(mode === 'feeling'){
+        feelingSel.disabled = false;
+        drawPath(null);
+        panelTitle.textContent = 'Feeling → Pathway';
+        panelDesc.textContent = 'Choose a feeling to visualize a typical brain pathway (schematic).';
+      } else {
+        feelingSel.disabled = true;
+        feelingSel.value = '';
+        if(mode === 'networks'){
+          colorByNetworks();
+          panelTitle.textContent = 'Networks view';
+          panelDesc.textContent = 'Nodes colored by major functional networks. Click to drill into details.';
+        } else {
+          neutralNodes();
+          panelTitle.textContent = 'Anatomy view';
+          panelDesc.textContent = 'Click a node to learn its role and see matching micro-practices.';
+        }
+      }
+    });
+
+    feelingSel.addEventListener('change', ()=>{
+      const key = feelingSel.value;
+      if(!key) return;
+      const sequence = atlas.feelings[key];
+      drawPath(sequence);
+      if(sequence && sequence.length){
+        const first = sequence[0];
+        panelTitle.textContent = `${key.charAt(0).toUpperCase()}${key.slice(1)} pathway`;
+        panelDesc.textContent = sequence.map(id=>atlas.nodes[id]?.name).filter(Boolean).join(' → ');
+        tryBtn.disabled = false;
+        focusBtn.disabled = false;
+        currentNode = first;
+      }
+    });
+
+    function highlightCategoryNodes(key){
+      const list = categoryToNodes[key];
+      drawPath(list);
+    }
+
     // Guided tour cycles through regions
-    const order = ['emotion','memory','attention','creativity','decision','language','social','motivation'];
+    const tourOrder = ['emotion','memory','attention','creativity','decision','language','social','motivation'];
     document.getElementById('startTour').addEventListener('click', ()=>{
-      let i=0; selectRegion(order[i]);
+      let i = 0;
+      selectRegion(tourOrder[i]);
       const id = setInterval(()=>{
-        i++; if(i>=order.length){ clearInterval(id); return; }
-        selectRegion(order[i]);
+        i += 1;
+        if(i >= tourOrder.length){ clearInterval(id); return; }
+        selectRegion(tourOrder[i]);
       }, 2200);
     });
 
@@ -490,49 +749,56 @@
 
     sliders.forEach(s=>{
       const el = document.getElementById(s.id);
-      const out = document.getElementById(s.id+"Score");
-      el.addEventListener('input', ()=> out.textContent = el.value);
+      const out = document.getElementById(`${s.id}Score`);
+      el.addEventListener('input', ()=>{ out.textContent = el.value; });
     });
 
-    function analyze(){
+    function computeScores(){
       const scores = { emotion:0, memory:0, attention:0, creativity:0, decision:0, language:0, social:0, motivation:0 };
       sliders.forEach(s=>{
-        const v = parseInt(document.getElementById(s.id).value,10);
-        for(const key in s.weight){ scores[key] += v * s.weight[key]; }
+        const value = parseInt(document.getElementById(s.id).value,10);
+        Object.entries(s.weight).forEach(([key, weight])=>{ scores[key] += value * weight; });
       });
-      // Pick max
-      const best = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
-      selectRegion(best);
-      const phrase = regions[best].title;
+      return scores;
+    }
+
+    function analyze(){
+      const scores = computeScores();
+      const [bestKey] = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
+      selectRegion(bestKey);
+      highlightCategoryNodes(bestKey);
+      const phrase = regions[bestKey].title;
       document.getElementById('scanResult').textContent = `Focus suggestion: ${phrase}. Open the 2‑minute practice to shift state now.`;
       window.location.hash = '#map';
     }
     document.getElementById('analyze').addEventListener('click', analyze);
 
-  // ===== SUBSCRIBE (mailto + copy) =====
+    // ===== SUBSCRIBE (mailto + copy) =====
     const subEmail = document.getElementById('subEmail');
     const subBtn = document.getElementById('subBtn');
     const subAlt = document.getElementById('subAlt');
     const subMsg = document.getElementById('subMsg');
 
-    function validEmail(v){return /.+@.+\..+/.test(v)}
+    function validEmail(value){
+      return /.+@.+\..+/.test(value);
+    }
 
     subBtn?.addEventListener('click', ()=>{
-      const v = subEmail.value.trim();
-      if(!validEmail(v)){ subMsg.textContent = 'Enter a valid email.'; return; }
+      const value = subEmail.value.trim();
+      if(!validEmail(value)){ subMsg.textContent = 'Enter a valid email.'; return; }
       const subject = encodeURIComponent('Subscribe me to NeuroMap Atlas');
-      const body = encodeURIComponent(`Please add me to updates.\nEmail: ${v}`);
-      window.location.href = `mailto:you@example.com?subject=${subject}&body=${body}`;
+      const body = encodeURIComponent(`Please add me to updates.\nEmail: ${value}`);
+      window.location.href = `mailto:info@recursive-emergence.org?subject=${subject}&body=${body}`;
       subMsg.textContent = 'Opening your email app… If nothing happens, click “Just email me.”';
     });
 
     subAlt?.addEventListener('click', ()=>{
-      const v = subEmail.value.trim();
-      const link = `mailto:you@example.com?subject=${encodeURIComponent('Subscribe me to NeuroMap Atlas')}&body=${encodeURIComponent('Please add me to updates. Email: ' + (v||'(type here)'))}`;
+      const value = subEmail.value.trim();
+      const link = `mailto:info@recursive-emergence.org?subject=${encodeURIComponent('Subscribe me to NeuroMap Atlas')}&body=${encodeURIComponent('Please add me to updates. Email: ' + (value || '(type here)'))}`;
       window.location.href = link;
     });
 
-  // ===== DOWNLOAD & SHARE =====
+    // ===== DOWNLOAD & SHARE =====
     function getValues(){
       return {
         mood: parseInt(document.getElementById('mood').value,10),
@@ -542,46 +808,156 @@
         create: parseInt(document.getElementById('create').value,10),
       };
     }
+
     function computeBest(){
-      const scores = { emotion:0, memory:0, attention:0, creativity:0, decision:0, language:0, social:0, motivation:0 };
-      sliders.forEach(s=>{
-        const v = parseInt(document.getElementById(s.id).value,10);
-        for(const key in s.weight){ scores[key] += v * s.weight[key]; }
-      });
+      const scores = computeScores();
       return Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
     }
+
     function timestamp(){
-      const d=new Date(); const pad=n=>String(n).padStart(2,'0');
+      const d = new Date();
+      const pad = n => String(n).padStart(2,'0');
       return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}-${pad(d.getMinutes())}`;
     }
+
     function download(name, text){
       const blob = new Blob([text], {type:'application/json'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = name; document.body.appendChild(a); a.click();
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
       setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
     }
+
     document.getElementById('downloadScan')?.addEventListener('click', ()=>{
-      const vals = getValues();
+      const values = getValues();
       const best = computeBest();
       const data = {
         timestamp: new Date().toISOString(),
-        sliders: vals,
+        sliders: values,
         suggestion: best,
         practice: regions[best]?.practice || '',
         url: window.location.href
       };
       download(`neuro-scan-${timestamp()}.json`, JSON.stringify(data, null, 2));
     });
+
     document.getElementById('shareState')?.addEventListener('click', ()=>{
-      const vals = getValues();
+      const values = getValues();
       const best = computeBest();
       const title = regions[best]?.title || best;
-      const parts = [`Self‑Scan → focus: ${title}`, `Mood ${vals.mood}`, `Memory ${vals.mem}`, `Attention ${vals.focus}`, `Stress ${vals.stress}`, `Creativity ${vals.create}`];
+      const parts = [`Self-Scan → focus: ${title}`, `Mood ${values.mood}`, `Memory ${values.mem}`, `Attention ${values.focus}`, `Stress ${values.stress}`, `Creativity ${values.create}`];
       const text = `I just mapped my mind on NeuroMap. ${parts.join(' · ')} #NeuroMap #BrainMap`;
       const intent = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(window.location.href);
       window.open(intent, '_blank','noopener');
     });
+
+    // ===== Region pulse =====
+    const regionCenters = {
+      emotion:[275,335], memory:[360,370], attention:[460,250], creativity:[360,210], decision:[540,325],
+      language:[235,225], social:[605,235], motivation:[470,400]
+    };
+
+    function pulseAtRegion(id){
+      const svg = document.querySelector('.brainbox svg');
+      if(!svg) return;
+      const viewBox = svg.viewBox.baseVal;
+      const rect = svg.getBoundingClientRect();
+      const [cx, cy] = regionCenters[id] || [400,300];
+      const x = rect.left + (cx / viewBox.width) * rect.width;
+      const y = rect.top + (cy / viewBox.height) * rect.height;
+      const pulse = document.createElement('div');
+      pulse.className = 'pulse';
+      pulse.style.left = `${x}px`;
+      pulse.style.top = `${y}px`;
+      document.body.appendChild(pulse);
+      pulse.addEventListener('animationend', ()=> pulse.remove());
+    }
+
+    // ===== Reveal on scroll =====
+    (function reveal(){
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if(reduce.matches) return;
+      const obs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if(entry.isIntersecting){
+            entry.target.classList.add('show');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, {threshold:.12, rootMargin:'0px 0px -40px 0px'});
+      $$('.reveal').forEach(el=> obs.observe(el));
+    })();
+
+    // ===== Magnetic buttons =====
+    (function magnets(){
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if(reduce.matches) return;
+      $$('.btn').forEach(btn=>{
+        const strength = 18;
+        function move(e){
+          const r = btn.getBoundingClientRect();
+          const mx = e.clientX - (r.left + r.width/2);
+          const my = e.clientY - (r.top + r.height/2);
+          btn.style.setProperty('--tx', (mx/r.width*strength)+'px');
+          btn.style.setProperty('--ty', (my/r.height*strength)+'px');
+          btn.classList.add('magnet-hover');
+        }
+        function leave(){
+          btn.classList.remove('magnet-hover');
+          btn.style.removeProperty('--tx');
+          btn.style.removeProperty('--ty');
+        }
+        btn.addEventListener('mousemove', move);
+        btn.addEventListener('mouseleave', leave);
+      });
+    })();
+
+    // ===== Cursor orb =====
+    (function cursorOrb(){
+      const orb = document.getElementById('cursorOrb');
+      if(!orb) return;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if(reduce.matches) return;
+      let tx=0, ty=0, cx=0, cy=0, hide=0;
+      function onMove(e){
+        tx = e.clientX;
+        ty = e.clientY;
+        document.body.classList.add('interacting');
+        clearTimeout(hide);
+        hide = setTimeout(()=> document.body.classList.remove('interacting'), 800);
+      }
+      window.addEventListener('mousemove', onMove, {passive:true});
+      function raf(){
+        cx += (tx - cx) * 0.12;
+        cy += (ty - cy) * 0.12;
+        orb.style.transform = `translate(${cx-120}px, ${cy-120}px)`;
+        requestAnimationFrame(raf);
+      }
+      raf();
+    })();
+
+    // ===== Brainbox tilt =====
+    (function tilt(){
+      const box = document.querySelector('.brainbox');
+      if(!box) return;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if(reduce.matches) return;
+      function move(e){
+        const r = box.getBoundingClientRect();
+        const x = (e.clientX - r.left)/r.width - .5;
+        const y = (e.clientY - r.top)/r.height - .5;
+        box.style.setProperty('--rx', (-y*6).toFixed(2)+'deg');
+        box.style.setProperty('--ry', (x*8).toFixed(2)+'deg');
+      }
+      function leave(){
+        box.style.removeProperty('--rx');
+        box.style.removeProperty('--ry');
+      }
+      box.addEventListener('mousemove', move);
+      box.addEventListener('mouseleave', leave);
+    })();
   </script>
 </body>
 </html>
