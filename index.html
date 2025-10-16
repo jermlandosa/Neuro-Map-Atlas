@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NeuroMap Atlas — Map Your Mind</title>
+  <meta name="description" content="A free, fully interactive brain‑mapping microsite: explore Emotion, Memory, Attention, Creativity, and Decision‑Making with 2‑minute practices." />
+  <meta name="theme-color" content="#0b1020" />
+  <style>
+    :root{
+      --bg:#0b1020;           /* deep indigo */
+      --panel:#0f1731;        /* darker card */
+      --ink:#e8edf7;          /* near-white */
+      --muted:#a6b2d6;
+      --teal:#2ad0ca;
+      --gold:#f5d06f;
+      --violet:#7aa2ff;
+      --danger:#ff6b6b;
+      --ok:#46e18a;
+      --glass:rgba(255,255,255,0.06);
+    }
+    html,body{height:100%}
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:radial-gradient(1200px 800px at 75% -10%, #101a3a 10%, transparent 60%),
+               radial-gradient(1000px 600px at -10% 20%, #0e1733 0%, transparent 55%),
+               var(--bg);
+      color:var(--ink); font:16px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      overflow-x:hidden;
+    }
+    a{color:var(--teal); text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* Layered hero */
+    .hero{position:relative; min-height:92vh; display:grid; place-items:center; overflow:hidden}
+    .layers{position:absolute; inset:0; pointer-events:none}
+    .layer{position:absolute; inset:0}
+    .glow{filter:blur(80px); opacity:.5}
+    .glow.teal{background:radial-gradient(600px 600px at 20% 30%, rgba(42,208,202,.6), transparent 60%)}
+    .glow.violet{background:radial-gradient(700px 700px at 80% 20%, rgba(122,162,255,.5), transparent 60%)}
+    .glow.gold{background:radial-gradient(500px 500px at 50% 90%, rgba(245,208,111,.35), transparent 60%)}
+
+    /* Canvas network sits behind */
+    #net{position:absolute; inset:0; z-index:0}
+
+    .hero-inner{position:relative; z-index:1; display:grid; gap:20px; padding:48px 24px; text-align:center; max-width:1100px}
+    .kicker{letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+    h1{font-size:clamp(2.2rem, 2.6rem + 1.5vw, 4.2rem); line-height:1.05; margin:6px 0 10px}
+    .sub{color:var(--muted); font-size:clamp(1rem, .9rem + .4vw, 1.2rem)}
+
+    .cta-row{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:10px}
+    .btn{--bgc:var(--teal); --fg: #041016; display:inline-flex; align-items:center; gap:10px; padding:12px 18px; border-radius:14px; font-weight:600; background:var(--bgc); color:var(--fg); border:1px solid transparent; box-shadow:0 4px 18px rgba(42,208,202,.25); cursor:pointer}
+    .btn.secondary{--bgc:transparent; --fg:var(--ink); border-color:rgba(122,162,255,.2); box-shadow:inset 0 0 0 1px rgba(122,162,255,.2)}
+    .btn:focus{outline:2px solid var(--gold); outline-offset:2px}
+
+    /* Sticky nav */
+    .nav{position:sticky; top:0; z-index:50; backdrop-filter:blur(12px); background:linear-gradient(180deg, rgba(10,14,30,.6), rgba(10,14,30,.25)); border-bottom:1px solid rgba(122,162,255,.15); display:flex; justify-content:center}
+    .nav-inner{max-width:1100px; flex:1; padding:10px 16px; display:flex; gap:14px; align-items:center}
+    .brand{font-weight:800; letter-spacing:.02em; display:flex; align-items:center; gap:6px}
+    .spacer{flex:1}
+    .nav a{padding:8px 12px; border-radius:10px}
+    .nav a:hover{background:rgba(255,255,255,.06)}
+
+    /* Logo + inputs */
+    .logo{display:inline-grid; place-items:center; width:26px; height:26px; border-radius:8px; background:linear-gradient(135deg, rgba(42,208,202,.25), rgba(122,162,255,.25)); color:var(--ink); box-shadow:0 2px 10px rgba(0,0,0,.3)}
+    .logo svg{display:block}
+    .field{display:flex; gap:10px; flex-wrap:wrap}
+    .field input[type=email]{flex:1; min-width:220px; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:var(--ink)}
+    .hint{color:var(--muted); font-size:.95rem}
+
+    /* Sections */
+    section{padding:72px 20px}
+    .wrap{max-width:1100px; margin:0 auto}
+
+    /* Map grid */
+    .map-grid{display:grid; grid-template-columns:1.05fr .95fr; gap:26px; align-items:center}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.14); border-radius:18px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.3); backdrop-filter:blur(10px)}
+
+    .brainbox{position:relative; aspect-ratio:4/3; border-radius:18px; overflow:hidden}
+    .brainbox svg{position:absolute; inset:0; width:100%; height:100%}
+    .legend{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px}
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:var(--glass)}
+    .dot{width:10px; height:10px; border-radius:50%}
+
+    .panel h3{margin:.3rem 0}
+    .panel p{color:var(--muted)}
+    .panel .actions{display:flex; gap:10px; margin-top:6px; flex-wrap:wrap}
+
+    /* Self-scan */
+    .scan{display:grid; gap:12px}
+    .row{display:grid; grid-template-columns:110px 1fr 48px; gap:12px; align-items:center}
+    input[type=range]{width:100%}
+    .score{font-variant-numeric:tabular-nums; text-align:right; color:var(--muted)}
+
+    /* Stories */
+    .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:16px}
+    .story{padding:16px; border-radius:16px; background:var(--glass); border:1px solid rgba(255,255,255,.12)}
+    .story h4{margin:.2rem 0}
+    .story p{color:var(--muted)}
+
+    .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
+
+    /* Footer */
+    footer{padding:40px 20px; color:var(--muted); text-align:center}
+
+    /* Parallax util */
+    [data-parallax]{will-change:transform}
+
+    /* Region styles */
+    .region{cursor:pointer; outline:none}
+    .region:focus{filter:drop-shadow(0 0 0.7rem rgba(245,208,111,.6))}
+    .region .fill{opacity:.18}
+    .region:hover .fill{opacity:.28}
+    .region.active .fill{opacity:.45}
+    .region#emotion .fill{fill:var(--danger)}
+    .region#memory .fill{fill:var(--gold)}
+    .region#attention .fill{fill:var(--teal)}
+    .region#creativity .fill{fill:var(--violet)}
+    .region#decision .fill{fill:#9cff94}
+    .region#language .fill{fill:#66d9ff}
+    .region#social .fill{fill:#ff9bd1}
+    .region#motivation .fill{fill:#ffa85c}
+
+    /* Accessibility & motion */
+    @media (prefers-reduced-motion: reduce){
+      .glow{display:none}
+      [data-parallax]{transform:none !important}
+    }
+    @media (max-width: 900px){
+      .map-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <!-- Sticky Nav -->
+  <nav class="nav" aria-label="Primary">
+    <div class="nav-inner">
+      <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 64 64" width="22" height="22" role="img" aria-label="NeuroMap logo"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" style="stop-color:var(--teal)"/><stop offset="100%" style="stop-color:var(--violet)"/></linearGradient></defs><rect x="8" y="8" width="48" height="48" rx="11" ry="11" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.18)"/><path d="M22 42 V22 L42 42 V22" fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> NeuroMap Atlas</div>
+      <div class="spacer"></div>
+      <a href="#map">Brain Map</a>
+      <a href="#scan">Self-Scan</a>
+      <a href="#stories">Stories</a>
+      <a href="#subscribe">Subscribe</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero" role="banner">
+    <canvas id="net" aria-hidden="true"></canvas>
+    <div class="layers">
+      <div class="layer glow teal" data-parallax data-speed="0.06"></div>
+      <div class="layer glow violet" data-parallax data-speed="0.09"></div>
+      <div class="layer glow gold" data-parallax data-speed="0.03"></div>
+    </div>
+    <div class="hero-inner">
+      <div class="kicker">Visually layered • Fully interactive • Free on GitHub Pages</div>
+      <h1 data-parallax data-speed="-0.04">Map Your Mind. See Patterns. Change Behavior.</h1>
+      <p class="sub" data-parallax data-speed="-0.02">Explore five core systems—Emotion, Memory, Attention, Creativity, Decision‑Making—with plain‑language visuals and 2‑minute practices.
+      </p>
+      <div class="cta-row">
+        <button class="btn" id="startTour">Start a Guided Tour</button>
+        <a class="btn secondary" href="#map">Explore the Map</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAP SECTION -->
+  <section id="map" aria-labelledby="map-title">
+    <div class="wrap map-grid">
+      <div class="card brainbox" aria-describedby="map-desc">
+        <svg viewBox="0 0 800 600" role="img" aria-labelledby="map-title map-desc">
+          <title id="map-title">Interactive Brain Map</title>
+          <desc id="map-desc">Select a region to learn what it does and try a 2‑minute practice.</desc>
+
+          <!-- Soft background silhouette -->
+          <defs>
+            <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.06"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0.01"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="400" cy="300" rx="320" ry="220" fill="url(#bgGrad)" />
+
+          <!-- Regions (stylized, not anatomical) -->
+          <g id="emotion" class="region" tabindex="0" role="button" aria-label="Emotion">
+            <circle class="fill" cx="275" cy="335" r="70"/>
+            <circle cx="275" cy="335" r="74" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
+          <g id="memory" class="region" tabindex="0" role="button" aria-label="Memory">
+            <circle class="fill" cx="360" cy="370" r="58"/>
+            <circle cx="360" cy="370" r="62" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
+          <g id="attention" class="region" tabindex="0" role="button" aria-label="Attention">
+            <circle class="fill" cx="460" cy="250" r="80"/>
+            <circle cx="460" cy="250" r="84" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
+          <g id="creativity" class="region" tabindex="0" role="button" aria-label="Creativity">
+            <circle class="fill" cx="360" cy="210" r="60"/>
+            <circle cx="360" cy="210" r="64" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
+          <g id="decision" class="region" tabindex="0" role="button" aria-label="Decision‑Making">
+            <circle class="fill" cx="540" cy="325" r="65"/>
+            <circle cx="540" cy="325" r="69" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
+          <g id="language" class="region" tabindex="0" role="button" aria-label="Language">
+            <circle class="fill" cx="235" cy="225" r="55"/>
+            <circle cx="235" cy="225" r="59" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
+          <g id="social" class="region" tabindex="0" role="button" aria-label="Social">
+            <circle class="fill" cx="605" cy="235" r="58"/>
+            <circle cx="605" cy="235" r="62" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
+          <g id="motivation" class="region" tabindex="0" role="button" aria-label="Motivation">
+            <circle class="fill" cx="470" cy="400" r="52"/>
+            <circle cx="470" cy="400" r="56" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
+        </svg>
+        <div class="legend" aria-hidden="true">
+          <span class="pill"><span class="dot" style="background:var(--danger)"></span>Emotion</span>
+          <span class="pill"><span class="dot" style="background:var(--gold)"></span>Memory</span>
+          <span class="pill"><span class="dot" style="background:var(--teal)"></span>Attention</span>
+          <span class="pill"><span class="dot" style="background:var(--violet)"></span>Creativity</span>
+          <span class="pill"><span class="dot" style="background:#9cff94"></span>Decision</span>
+          <span class="pill"><span class="dot" style="background:#66d9ff"></span>Language</span>
+          <span class="pill"><span class="dot" style="background:#ff9bd1"></span>Social</span>
+          <span class="pill"><span class="dot" style="background:#ffa85c"></span>Motivation</span>
+        </div>
+      </div>
+
+      <aside class="card panel" aria-live="polite">
+        <h3 id="panelTitle">Pick a region</h3>
+        <p id="panelDesc">Click a colored circle (or use Tab + Enter) to learn what that system does and try a 2‑minute micro‑practice.</p>
+        <div class="actions">
+          <button class="btn" id="tryPractice" disabled>Do 2‑Minute Practice</button>
+          <button class="btn secondary" id="focusRegion" disabled>Highlight Region</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- SELF SCAN -->
+  <section id="scan" aria-labelledby="scan-title">
+    <div class="wrap card">
+      <h2 id="scan-title">2‑Minute Self‑Scan</h2>
+      <p class="sub">Slide to rate how you feel right now. We’ll highlight the system to focus on and suggest a micro‑practice.</p>
+      <div class="scan" role="form" aria-describedby="scan-help">
+        <div id="scan-help" class="sr-only"></div>
+        <div class="row"><label for="mood">Emotion</label><input id="mood" type="range" min="0" max="10" step="1" value="5"/><div class="score" id="moodScore">5</div></div>
+        <div class="row"><label for="mem">Memory</label><input id="mem" type="range" min="0" max="10" step="1" value="5"/><div class="score" id="memScore">5</div></div>
+        <div class="row"><label for="focus">Attention</label><input id="focus" type="range" min="0" max="10" step="1" value="5"/><div class="score" id="focusScore">5</div></div>
+        <div class="row"><label for="stress">Stress</label><input id="stress" type="range" min="0" max="10" step="1" value="5"/><div class="score" id="stressScore">5</div></div>
+        <div class="row"><label for="create">Creativity</label><input id="create" type="range" min="0" max="10" step="1" value="5"/><div class="score" id="createScore">5</div></div>
+      </div>
+      <div class="cta-row" style="justify-content:flex-start; margin-top:10px">
+        <button class="btn" id="analyze">Analyze & Highlight</button>
+        <button class="btn secondary" id="downloadScan">Download Self-Scan</button>
+        <button class="btn secondary" id="shareState">Share this state</button>
+        <a class="btn secondary" href="#map">Back to Map</a>
+      </div>
+      <p id="scanResult" style="margin-top:8px; color:var(--muted)"></p>
+    </div>
+  </section>
+
+  <!-- STORIES -->
+  <section id="stories" aria-labelledby="stories-title">
+    <div class="wrap">
+      <h2 id="stories-title">Stories & Insights</h2>
+      <div class="grid">
+        <article class="story">
+          <h4>Why micro‑practices beat willpower</h4>
+          <p>Two minutes is enough to change the loop your brain is in—because state shift precedes belief change.</p>
+        </article>
+        <article class="story">
+          <h4>Attention as a trainable sense</h4>
+          <p>A simple breath‑count drill improves sustained attention in under 120 seconds—try it before email.</p>
+        </article>
+        <article class="story">
+          <h4>Memory needs spacing</h4>
+          <p>Most “forgetting” is timing, not talent. Spaced recall + zero‑pressure prompts keep knowledge alive.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" aria-labelledby="contact-title">
+    <div class="wrap card">
+      <h2 id="contact-title">Contact</h2>
+      <p>Want to collaborate or contribute a practice? Email <a href="mailto:you@example.com">you@example.com</a>. This is a learning resource, not medical advice.</p>
+    </div>
+  </section>
+
+  <!-- SUBSCRIBE -->
+  <section id="subscribe" aria-labelledby="subscribe-title">
+    <div class="wrap card">
+      <h2 id="subscribe-title">Subscribe for New Brain Maps</h2>
+      <p class="hint">Free, occasional updates. No spam. Your email stays private.</p>
+      <div class="field" role="form" aria-label="Subscribe form">
+        <input id="subEmail" type="email" placeholder="you@example.com" required />
+        <button class="btn" id="subBtn">Subscribe</button>
+        <button class="btn secondary" id="subAlt">Just email me</button>
+      </div>
+      <p id="subMsg" class="hint" style="margin-top:8px"></p>
+    </div>
+  </section>
+
+  <footer>
+    <small>© <span id="year"></span> NeuroMap Atlas. Built as a single static file for free GitHub Pages hosting. No trackers. No external libraries.</small>
+  </footer>
+
+  <!-- Modal (practice) -->
+  <dialog id="practiceModal" style="border:none; border-radius:16px; padding:0; background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05)); color:var(--ink); max-width:640px; width:92%">
+    <form method="dialog" style="padding:18px">
+      <h3 id="practiceTitle">2‑Minute Practice</h3>
+      <p id="practiceText" style="color:var(--muted)"></p>
+      <div class="cta-row" style="justify-content:flex-end">
+        <button class="btn secondary">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    // ===== UTIL =====
+    const $ = (sel, el=document) => el.querySelector(sel);
+    const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+    // ===== YEAR =====
+    $('#year').textContent = new Date().getFullYear();
+
+    // ===== PARTICLE NETWORK BACKGROUND =====
+    (function particleNet(){
+      const c = document.getElementById('net');
+      const ctx = c.getContext('2d');
+      let w, h, dpr = Math.min(2, window.devicePixelRatio || 1);
+      let points = [];
+      function resize(){
+        w = c.clientWidth; h = c.clientHeight; c.width = w*dpr; c.height = h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+        points = new Array(90).fill().map(()=>({
+          x: Math.random()*w, y: Math.random()*h,
+          vx: (Math.random()-.5)*0.6, vy: (Math.random()-.5)*0.6,
+          r: 1 + Math.random()*2
+        }));
+      }
+      resize();
+      window.addEventListener('resize', resize);
+      function step(){
+        ctx.clearRect(0,0,w,h);
+        // draw & move points
+        for(const p of points){
+          p.x+=p.vx; p.y+=p.vy;
+          if(p.x<0||p.x>w) p.vx*=-1; if(p.y<0||p.y>h) p.vy*=-1;
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+          ctx.fillStyle='rgba(122,162,255,.55)'; ctx.fill();
+        }
+        // connections
+        for(let i=0;i<points.length;i++){
+          for(let j=i+1;j<points.length;j++){
+            const a=points[i], b=points[j];
+            const dx=a.x-b.x, dy=a.y-b.y; const dist=Math.hypot(dx,dy);
+            if(dist<120){
+              const alpha = .12*(1 - dist/120);
+              ctx.strokeStyle = `rgba(42,208,202,${alpha})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+            }
+          }
+        }
+        requestAnimationFrame(step);
+      }
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if(!mediaQuery.matches) step();
+    })();
+
+    // ===== PARALLAX =====
+    (function parallax(){
+      const els = $$('[data-parallax]');
+      if(!els.length) return;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if(reduce.matches) return;
+      const onScroll = () => {
+        const y = window.scrollY || 0;
+        els.forEach(el=>{
+          const speed = parseFloat(el.getAttribute('data-speed')||'0');
+          el.style.transform = `translateY(${y*speed}px)`;
+        });
+      };
+      onScroll();
+      document.addEventListener('scroll', onScroll, {passive:true});
+    })();
+
+    // ===== INTERACTIVE MAP =====
+    const regions = {
+      emotion: {
+        title: 'Emotion',
+        desc: 'Your body’s quick meaning‑maker. Name it to tame it; breath shapes the signal.',
+        practice: `Box Breath (2 min): Inhale 4 · Hold 4 · Exhale 4 · Hold 4 — repeat 8 cycles. As you exhale, softly label the feeling (e.g., “restless,” “tight,” “calm”).`
+      },
+      memory: {
+        title: 'Memory',
+        desc: 'Encoding and recall like rhythm—short, spaced repetitions keep knowledge alive.',
+        practice: `Tiny Recall (2 min): Pick one fact you learned today. Write it from memory in 1 sentence. Wait 30s. Write it again with 10% more detail.`
+      },
+      attention: {
+        title: 'Attention',
+        desc: 'Sustained focus is trainable; brief drills sharpen the lens before tasks.',
+        practice: `Breath‑Count (2 min): Count 1 to 10 with each exhale. If distracted, restart at 1 with zero judgment. Aim for one clean 1→10.`
+      },
+      creativity: {
+        title: 'Creativity',
+        desc: 'Divergent ideas emerge when pressure drops and associations widen.',
+        practice: `Associative Burst (2 min): Pick an object near you. List 10 alternate uses in 120 seconds. Do not edit; go for volume.`
+      },
+      decision: {
+        title: 'Decision‑Making',
+        desc: 'Clarity comes from comparing futures, not arguments. Make options visible.',
+        practice: `Two‑Futures Flip (2 min): Name Choice A vs B. For each, speak one sentence: “Six months from now, I will be…”. Pick the calmer body answer.`
+      },
+      language: {
+        title: 'Language',
+        desc: 'Words shape attention. Clear phrasing reduces cognitive load and improves recall.',
+        practice: `Rename It (2 min): Take a complex idea you’re using today. Rewrite it in one short, concrete sentence a 10‑year‑old could follow.`
+      },
+      social: {
+        title: 'Social',
+        desc: 'Regulation is co‑regulation. A calm voice and eye focus can shift your state in seconds.',
+        practice: `30‑Second Co‑Reg (2 min): Call or voice‑note a friend. Slow your voice, 6‑second exhale. Name one appreciation.`
+      },
+      motivation: {
+        title: 'Motivation',
+        desc: 'Tiny starts beat big plans. Lower the bar and raise consistency.',
+        practice: `Starter Step (2 min): Choose one task. Define a 60‑second first move (open doc, title it). Do that now; then decide the next tile.`
+      }
+    };
+
+    let currentRegion = null;
+    const panelTitle = document.getElementById('panelTitle');
+    const panelDesc = document.getElementById('panelDesc');
+    const tryBtn = document.getElementById('tryPractice');
+    const focusBtn = document.getElementById('focusRegion');
+    const modal = document.getElementById('practiceModal');
+    const practiceTitle = document.getElementById('practiceTitle');
+    const practiceText = document.getElementById('practiceText');
+
+    function selectRegion(id){
+      currentRegion = id;
+      $$('.region').forEach(g=>g.classList.toggle('active', g.id===id));
+      const data = regions[id];
+      panelTitle.textContent = data.title;
+      panelDesc.textContent = `${data.desc}`;
+      tryBtn.disabled = false; focusBtn.disabled = false;
+    }
+
+    $$('.region').forEach(g=>{
+      g.addEventListener('click', ()=>selectRegion(g.id));
+      g.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectRegion(g.id);} });
+    });
+
+    tryBtn.addEventListener('click', ()=>{
+      if(!currentRegion) return;
+      practiceTitle.textContent = `${regions[currentRegion].title}: 2‑Minute Practice`;
+      practiceText.textContent = regions[currentRegion].practice;
+      modal.showModal();
+    });
+
+    focusBtn.addEventListener('click', ()=>{
+      if(!currentRegion) return;
+      const el = document.getElementById(currentRegion);
+      el.scrollIntoView({behavior:'smooth', block:'center', inline:'center'});
+    });
+
+    // Guided tour cycles through regions
+    const order = ['emotion','memory','attention','creativity','decision','language','social','motivation'];
+    document.getElementById('startTour').addEventListener('click', ()=>{
+      let i=0; selectRegion(order[i]);
+      const id = setInterval(()=>{
+        i++; if(i>=order.length){ clearInterval(id); return; }
+        selectRegion(order[i]);
+      }, 2200);
+    });
+
+    // ===== SELF SCAN =====
+    const sliders = [
+      { id:'mood',  weight:{ emotion:+1, decision:-.2, social:+.5, motivation:+.3 } },
+      { id:'mem',   weight:{ memory:+1, language:+.4 } },
+      { id:'focus', weight:{ attention:+1, creativity:-.2, language:+.3 } },
+      { id:'stress',weight:{ emotion:+.8, attention:-.3, decision:+.4, social:+.5 } },
+      { id:'create',weight:{ creativity:+1, motivation:+.3 } },
+    ];
+
+    sliders.forEach(s=>{
+      const el = document.getElementById(s.id);
+      const out = document.getElementById(s.id+"Score");
+      el.addEventListener('input', ()=> out.textContent = el.value);
+    });
+
+    function analyze(){
+      const scores = { emotion:0, memory:0, attention:0, creativity:0, decision:0, language:0, social:0, motivation:0 };
+      sliders.forEach(s=>{
+        const v = parseInt(document.getElementById(s.id).value,10);
+        for(const key in s.weight){ scores[key] += v * s.weight[key]; }
+      });
+      // Pick max
+      const best = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+      selectRegion(best);
+      const phrase = regions[best].title;
+      document.getElementById('scanResult').textContent = `Focus suggestion: ${phrase}. Open the 2‑minute practice to shift state now.`;
+      window.location.hash = '#map';
+    }
+    document.getElementById('analyze').addEventListener('click', analyze);
+
+  // ===== SUBSCRIBE (mailto + copy) =====
+    const subEmail = document.getElementById('subEmail');
+    const subBtn = document.getElementById('subBtn');
+    const subAlt = document.getElementById('subAlt');
+    const subMsg = document.getElementById('subMsg');
+
+    function validEmail(v){return /.+@.+\..+/.test(v)}
+
+    subBtn?.addEventListener('click', ()=>{
+      const v = subEmail.value.trim();
+      if(!validEmail(v)){ subMsg.textContent = 'Enter a valid email.'; return; }
+      const subject = encodeURIComponent('Subscribe me to NeuroMap Atlas');
+      const body = encodeURIComponent(`Please add me to updates.\nEmail: ${v}`);
+      window.location.href = `mailto:you@example.com?subject=${subject}&body=${body}`;
+      subMsg.textContent = 'Opening your email app… If nothing happens, click “Just email me.”';
+    });
+
+    subAlt?.addEventListener('click', ()=>{
+      const v = subEmail.value.trim();
+      const link = `mailto:you@example.com?subject=${encodeURIComponent('Subscribe me to NeuroMap Atlas')}&body=${encodeURIComponent('Please add me to updates. Email: ' + (v||'(type here)'))}`;
+      window.location.href = link;
+    });
+
+  // ===== DOWNLOAD & SHARE =====
+    function getValues(){
+      return {
+        mood: parseInt(document.getElementById('mood').value,10),
+        mem: parseInt(document.getElementById('mem').value,10),
+        focus: parseInt(document.getElementById('focus').value,10),
+        stress: parseInt(document.getElementById('stress').value,10),
+        create: parseInt(document.getElementById('create').value,10),
+      };
+    }
+    function computeBest(){
+      const scores = { emotion:0, memory:0, attention:0, creativity:0, decision:0, language:0, social:0, motivation:0 };
+      sliders.forEach(s=>{
+        const v = parseInt(document.getElementById(s.id).value,10);
+        for(const key in s.weight){ scores[key] += v * s.weight[key]; }
+      });
+      return Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+    }
+    function timestamp(){
+      const d=new Date(); const pad=n=>String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}-${pad(d.getMinutes())}`;
+    }
+    function download(name, text){
+      const blob = new Blob([text], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    }
+    document.getElementById('downloadScan')?.addEventListener('click', ()=>{
+      const vals = getValues();
+      const best = computeBest();
+      const data = {
+        timestamp: new Date().toISOString(),
+        sliders: vals,
+        suggestion: best,
+        practice: regions[best]?.practice || '',
+        url: window.location.href
+      };
+      download(`neuro-scan-${timestamp()}.json`, JSON.stringify(data, null, 2));
+    });
+    document.getElementById('shareState')?.addEventListener('click', ()=>{
+      const vals = getValues();
+      const best = computeBest();
+      const title = regions[best]?.title || best;
+      const parts = [`Self‑Scan → focus: ${title}`, `Mood ${vals.mood}`, `Memory ${vals.mem}`, `Attention ${vals.focus}`, `Stress ${vals.stress}`, `Creativity ${vals.create}`];
+      const text = `I just mapped my mind on NeuroMap. ${parts.join(' · ')} #NeuroMap #BrainMap`;
+      const intent = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(window.location.href);
+      window.open(intent, '_blank','noopener');
+    });
+  </script>
+</body>
+</html>
