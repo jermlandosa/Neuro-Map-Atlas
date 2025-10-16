@@ -56,10 +56,17 @@
     /* Sticky nav */
     .nav{position:sticky; top:0; z-index:50; backdrop-filter:blur(12px); background:linear-gradient(180deg, rgba(10,14,30,.6), rgba(10,14,30,.25)); border-bottom:1px solid rgba(122,162,255,.15); display:flex; justify-content:center}
     .nav-inner{max-width:1100px; flex:1; padding:10px 16px; display:flex; gap:14px; align-items:center}
-    .brand{font-weight:800; letter-spacing:.02em}
+    .brand{font-weight:800; letter-spacing:.02em; display:flex; align-items:center; gap:6px}
     .spacer{flex:1}
     .nav a{padding:8px 12px; border-radius:10px}
     .nav a:hover{background:rgba(255,255,255,.06)}
+
+    /* Logo + inputs */
+    .logo{display:inline-grid; place-items:center; width:26px; height:26px; border-radius:8px; background:linear-gradient(135deg, rgba(42,208,202,.25), rgba(122,162,255,.25)); color:var(--ink); box-shadow:0 2px 10px rgba(0,0,0,.3)}
+    .logo svg{display:block}
+    .field{display:flex; gap:10px; flex-wrap:wrap}
+    .field input[type=email]{flex:1; min-width:220px; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:var(--ink)}
+    .hint{color:var(--muted); font-size:.95rem}
 
     /* Sections */
     section{padding:72px 20px}
@@ -110,6 +117,9 @@
     .region#attention .fill{fill:var(--teal)}
     .region#creativity .fill{fill:var(--violet)}
     .region#decision .fill{fill:#9cff94}
+    .region#language .fill{fill:#66d9ff}
+    .region#social .fill{fill:#ff9bd1}
+    .region#motivation .fill{fill:#ffa85c}
 
     /* Accessibility & motion */
     @media (prefers-reduced-motion: reduce){
@@ -125,11 +135,12 @@
   <!-- Sticky Nav -->
   <nav class="nav" aria-label="Primary">
     <div class="nav-inner">
-      <div class="brand">NeuroMap Atlas</div>
+      <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 64 64" width="22" height="22" role="img" aria-label="NeuroMap logo"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" style="stop-color:var(--teal)"/><stop offset="100%" style="stop-color:var(--violet)"/></linearGradient></defs><rect x="8" y="8" width="48" height="48" rx="11" ry="11" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.18)"/><path d="M22 42 V22 L42 42 V22" fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></span> NeuroMap Atlas</div>
       <div class="spacer"></div>
       <a href="#map">Brain Map</a>
       <a href="#scan">Self-Scan</a>
       <a href="#stories">Stories</a>
+      <a href="#subscribe">Subscribe</a>
       <a href="#contact">Contact</a>
     </div>
   </nav>
@@ -192,6 +203,18 @@
             <circle class="fill" cx="540" cy="325" r="65"/>
             <circle cx="540" cy="325" r="69" fill="none" stroke="rgba(255,255,255,.18)" />
           </g>
+          <g id="language" class="region" tabindex="0" role="button" aria-label="Language">
+            <circle class="fill" cx="235" cy="225" r="55"/>
+            <circle cx="235" cy="225" r="59" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
+          <g id="social" class="region" tabindex="0" role="button" aria-label="Social">
+            <circle class="fill" cx="605" cy="235" r="58"/>
+            <circle cx="605" cy="235" r="62" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
+          <g id="motivation" class="region" tabindex="0" role="button" aria-label="Motivation">
+            <circle class="fill" cx="470" cy="400" r="52"/>
+            <circle cx="470" cy="400" r="56" fill="none" stroke="rgba(255,255,255,.18)" />
+          </g>
         </svg>
         <div class="legend" aria-hidden="true">
           <span class="pill"><span class="dot" style="background:var(--danger)"></span>Emotion</span>
@@ -199,6 +222,9 @@
           <span class="pill"><span class="dot" style="background:var(--teal)"></span>Attention</span>
           <span class="pill"><span class="dot" style="background:var(--violet)"></span>Creativity</span>
           <span class="pill"><span class="dot" style="background:#9cff94"></span>Decision</span>
+          <span class="pill"><span class="dot" style="background:#66d9ff"></span>Language</span>
+          <span class="pill"><span class="dot" style="background:#ff9bd1"></span>Social</span>
+          <span class="pill"><span class="dot" style="background:#ffa85c"></span>Motivation</span>
         </div>
       </div>
 
@@ -228,6 +254,8 @@
       </div>
       <div class="cta-row" style="justify-content:flex-start; margin-top:10px">
         <button class="btn" id="analyze">Analyze & Highlight</button>
+        <button class="btn secondary" id="downloadScan">Download Self-Scan</button>
+        <button class="btn secondary" id="shareState">Share this state</button>
         <a class="btn secondary" href="#map">Back to Map</a>
       </div>
       <p id="scanResult" style="margin-top:8px; color:var(--muted)"></p>
@@ -260,6 +288,20 @@
     <div class="wrap card">
       <h2 id="contact-title">Contact</h2>
       <p>Want to collaborate or contribute a practice? Email <a href="mailto:you@example.com">you@example.com</a>. This is a learning resource, not medical advice.</p>
+    </div>
+  </section>
+
+  <!-- SUBSCRIBE -->
+  <section id="subscribe" aria-labelledby="subscribe-title">
+    <div class="wrap card">
+      <h2 id="subscribe-title">Subscribe for New Brain Maps</h2>
+      <p class="hint">Free, occasional updates. No spam. Your email stays private.</p>
+      <div class="field" role="form" aria-label="Subscribe form">
+        <input id="subEmail" type="email" placeholder="you@example.com" required />
+        <button class="btn" id="subBtn">Subscribe</button>
+        <button class="btn secondary" id="subAlt">Just email me</button>
+      </div>
+      <p id="subMsg" class="hint" style="margin-top:8px"></p>
     </div>
   </section>
 
@@ -373,6 +415,21 @@
         title: 'Decision‑Making',
         desc: 'Clarity comes from comparing futures, not arguments. Make options visible.',
         practice: `Two‑Futures Flip (2 min): Name Choice A vs B. For each, speak one sentence: “Six months from now, I will be…”. Pick the calmer body answer.`
+      },
+      language: {
+        title: 'Language',
+        desc: 'Words shape attention. Clear phrasing reduces cognitive load and improves recall.',
+        practice: `Rename It (2 min): Take a complex idea you’re using today. Rewrite it in one short, concrete sentence a 10‑year‑old could follow.`
+      },
+      social: {
+        title: 'Social',
+        desc: 'Regulation is co‑regulation. A calm voice and eye focus can shift your state in seconds.',
+        practice: `30‑Second Co‑Reg (2 min): Call or voice‑note a friend. Slow your voice, 6‑second exhale. Name one appreciation.`
+      },
+      motivation: {
+        title: 'Motivation',
+        desc: 'Tiny starts beat big plans. Lower the bar and raise consistency.',
+        practice: `Starter Step (2 min): Choose one task. Define a 60‑second first move (open doc, title it). Do that now; then decide the next tile.`
       }
     };
 
@@ -413,7 +470,7 @@
     });
 
     // Guided tour cycles through regions
-    const order = ['emotion','memory','attention','creativity','decision'];
+    const order = ['emotion','memory','attention','creativity','decision','language','social','motivation'];
     document.getElementById('startTour').addEventListener('click', ()=>{
       let i=0; selectRegion(order[i]);
       const id = setInterval(()=>{
@@ -424,11 +481,11 @@
 
     // ===== SELF SCAN =====
     const sliders = [
-      { id:'mood', weight:{ emotion:+1, decision:-.2 } },
-      { id:'mem',  weight:{ memory:+1 } },
-      { id:'focus',weight:{ attention:+1, creativity:-.2 } },
-      { id:'stress',weight:{ emotion:+.8, attention:-.3, decision:+.4 } },
-      { id:'create',weight:{ creativity:+1 } },
+      { id:'mood',  weight:{ emotion:+1, decision:-.2, social:+.5, motivation:+.3 } },
+      { id:'mem',   weight:{ memory:+1, language:+.4 } },
+      { id:'focus', weight:{ attention:+1, creativity:-.2, language:+.3 } },
+      { id:'stress',weight:{ emotion:+.8, attention:-.3, decision:+.4, social:+.5 } },
+      { id:'create',weight:{ creativity:+1, motivation:+.3 } },
     ];
 
     sliders.forEach(s=>{
@@ -438,7 +495,7 @@
     });
 
     function analyze(){
-      const scores = { emotion:0, memory:0, attention:0, creativity:0, decision:0 };
+      const scores = { emotion:0, memory:0, attention:0, creativity:0, decision:0, language:0, social:0, motivation:0 };
       sliders.forEach(s=>{
         const v = parseInt(document.getElementById(s.id).value,10);
         for(const key in s.weight){ scores[key] += v * s.weight[key]; }
@@ -451,6 +508,80 @@
       window.location.hash = '#map';
     }
     document.getElementById('analyze').addEventListener('click', analyze);
+
+  // ===== SUBSCRIBE (mailto + copy) =====
+    const subEmail = document.getElementById('subEmail');
+    const subBtn = document.getElementById('subBtn');
+    const subAlt = document.getElementById('subAlt');
+    const subMsg = document.getElementById('subMsg');
+
+    function validEmail(v){return /.+@.+\..+/.test(v)}
+
+    subBtn?.addEventListener('click', ()=>{
+      const v = subEmail.value.trim();
+      if(!validEmail(v)){ subMsg.textContent = 'Enter a valid email.'; return; }
+      const subject = encodeURIComponent('Subscribe me to NeuroMap Atlas');
+      const body = encodeURIComponent(`Please add me to updates.\nEmail: ${v}`);
+      window.location.href = `mailto:you@example.com?subject=${subject}&body=${body}`;
+      subMsg.textContent = 'Opening your email app… If nothing happens, click “Just email me.”';
+    });
+
+    subAlt?.addEventListener('click', ()=>{
+      const v = subEmail.value.trim();
+      const link = `mailto:you@example.com?subject=${encodeURIComponent('Subscribe me to NeuroMap Atlas')}&body=${encodeURIComponent('Please add me to updates. Email: ' + (v||'(type here)'))}`;
+      window.location.href = link;
+    });
+
+  // ===== DOWNLOAD & SHARE =====
+    function getValues(){
+      return {
+        mood: parseInt(document.getElementById('mood').value,10),
+        mem: parseInt(document.getElementById('mem').value,10),
+        focus: parseInt(document.getElementById('focus').value,10),
+        stress: parseInt(document.getElementById('stress').value,10),
+        create: parseInt(document.getElementById('create').value,10),
+      };
+    }
+    function computeBest(){
+      const scores = { emotion:0, memory:0, attention:0, creativity:0, decision:0, language:0, social:0, motivation:0 };
+      sliders.forEach(s=>{
+        const v = parseInt(document.getElementById(s.id).value,10);
+        for(const key in s.weight){ scores[key] += v * s.weight[key]; }
+      });
+      return Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+    }
+    function timestamp(){
+      const d=new Date(); const pad=n=>String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}-${pad(d.getMinutes())}`;
+    }
+    function download(name, text){
+      const blob = new Blob([text], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    }
+    document.getElementById('downloadScan')?.addEventListener('click', ()=>{
+      const vals = getValues();
+      const best = computeBest();
+      const data = {
+        timestamp: new Date().toISOString(),
+        sliders: vals,
+        suggestion: best,
+        practice: regions[best]?.practice || '',
+        url: window.location.href
+      };
+      download(`neuro-scan-${timestamp()}.json`, JSON.stringify(data, null, 2));
+    });
+    document.getElementById('shareState')?.addEventListener('click', ()=>{
+      const vals = getValues();
+      const best = computeBest();
+      const title = regions[best]?.title || best;
+      const parts = [`Self‑Scan → focus: ${title}`, `Mood ${vals.mood}`, `Memory ${vals.mem}`, `Attention ${vals.focus}`, `Stress ${vals.stress}`, `Creativity ${vals.create}`];
+      const text = `I just mapped my mind on NeuroMap. ${parts.join(' · ')} #NeuroMap #BrainMap`;
+      const intent = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(window.location.href);
+      window.open(intent, '_blank','noopener');
+    });
   </script>
 </body>
 </html>
