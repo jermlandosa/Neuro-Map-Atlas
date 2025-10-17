@@ -154,6 +154,9 @@
     .row{display:grid; grid-template-columns:110px 1fr 48px; gap:12px; align-items:center}
     input[type=range]{width:100%}
     .score{font-variant-numeric:tabular-nums; text-align:right; color:var(--muted)}
+    .sparkWrap{margin-top:14px; display:flex; align-items:center; gap:12px}
+    #sparkline{width:220px; height:60px; background:rgba(255,255,255,.04); border-radius:10px}
+    .sparkLabel{color:var(--muted); font-size:.9rem}
 
     /* Stories */
     .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:16px}
@@ -177,6 +180,33 @@
       .row input{grid-area:range}
       .row .score{grid-area:score}
       .zoomHUD{position:static; justify-content:flex-end; margin-top:12px}
+    }
+    /* Phone-first UI */
+    .mobileDock{
+      position:fixed; left:0; right:0; bottom:0;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      display:none; gap:8px; justify-content:space-between;
+      background:linear-gradient(180deg, rgba(10,14,30,.2), rgba(10,14,30,.75));
+      backdrop-filter:blur(10px);
+      border-top:1px solid rgba(255,255,255,.12);
+      z-index:70;
+    }
+    .mobileDock .btn{ flex:1; text-align:center }
+
+    @media (max-width: 720px){
+      .hero{min-height:78vh}
+      .hero-inner{padding:40px 16px}
+      .btn{padding:14px 16px; border-radius:16px}
+      .row{grid-template-columns:90px 1fr 40px}
+      .brainbox{aspect-ratio:1/1}
+      .legend{justify-content:center}
+      .nav{position:static}
+      .mobileDock{display:flex}
+    }
+
+    /* Hide cursor orb on touch devices */
+    @media (hover: none) and (pointer: coarse){
+      #cursorOrb{display:none}
     }
   </style>
 </head>
@@ -299,6 +329,7 @@
         <div class="actions">
           <button class="btn" id="tryPractice" disabled>Do 2‑Minute Practice</button>
           <button class="btn secondary" id="focusRegion" disabled>Highlight</button>
+          <button class="btn secondary" id="showEvidence" disabled>Evidence</button>
         </div>
         <div class="field" style="margin-top:12px">
           <label for="mode">Mode</label>
@@ -359,6 +390,10 @@
         <a class="btn secondary" href="#map">Back to Map</a>
       </div>
       <p id="scanResult" style="margin-top:8px; color:var(--muted)"></p>
+      <div class="sparkWrap">
+        <canvas id="sparkline" width="220" height="60"></canvas>
+        <div class="sparkLabel" id="sparkLabel">No history yet</div>
+      </div>
     </div>
   </section>
 
@@ -409,11 +444,27 @@
     <small>© <span id="year"></span> NeuroMap Atlas. Built as a single static file for free GitHub Pages hosting. No trackers. No external libraries.</small>
   </footer>
 
+  <div class="mobileDock" aria-hidden="false">
+    <a class="btn secondary" href="#map">Map</a>
+    <a class="btn secondary" href="#scan">Self-Scan</a>
+    <a class="btn secondary" href="#subscribe">Subscribe</a>
+  </div>
+
   <!-- Modal (practice) -->
   <dialog id="practiceModal" style="border:none; border-radius:16px; padding:0; background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05)); color:var(--ink); max-width:640px; width:92%">
     <form method="dialog" style="padding:18px">
       <h3 id="practiceTitle">2‑Minute Practice</h3>
       <p id="practiceText" style="color:var(--muted)"></p>
+      <div class="cta-row" style="justify-content:flex-end">
+        <button class="btn secondary">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="evidenceModal" style="border:none; border-radius:16px; padding:0; background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05)); color:var(--ink); max-width:680px; width:92%">
+    <form method="dialog" style="padding:20px; display:grid; gap:14px">
+      <h3 id="evidenceTitle">Evidence</h3>
+      <div id="evidenceBody" style="color:var(--muted); font-size:.95rem"></div>
       <div class="cta-row" style="justify-content:flex-end">
         <button class="btn secondary">Close</button>
       </div>
@@ -437,7 +488,7 @@
         w = c.clientWidth; h = c.clientHeight;
         c.width = w*dpr; c.height = h*dpr;
         ctx.setTransform(dpr,0,0,dpr,0,0);
-        points = new Array(90).fill().map(()=>({
+        points = new Array(Math.max(40, Math.min(120, Math.round((w*h)/10000)))).fill().map(()=>({
           x: Math.random()*w, y: Math.random()*h,
           vx: (Math.random()-.5)*0.6, vy: (Math.random()-.5)*0.6,
           r: 1 + Math.random()*2
@@ -588,9 +639,67 @@
     const panelDesc = document.getElementById('panelDesc');
     const tryBtn = document.getElementById('tryPractice');
     const focusBtn = document.getElementById('focusRegion');
+    const showEvBtn = document.getElementById('showEvidence');
     const modal = document.getElementById('practiceModal');
     const practiceTitle = document.getElementById('practiceTitle');
     const practiceText = document.getElementById('practiceText');
+    const evidenceModal = document.getElementById('evidenceModal');
+    const evidenceTitle = document.getElementById('evidenceTitle');
+    const evidenceBody = document.getElementById('evidenceBody');
+    const sparkLabel = document.getElementById('sparkLabel');
+
+    const bib = {
+      miller2001: { title:'An integrative theory of prefrontal cortex function', cite:'Miller & Cohen (2001) Annu. Rev. Neurosci.', link:'https://doi.org/10.1146/annurev.neuro.24.1.167' },
+      menon2010: { title:'Large-scale brain networks and psychopathology', cite:'Menon (2011) Trends Cogn. Sci.', link:'https://doi.org/10.1016/j.tics.2011.08.003' },
+      raichle2015: { title:'The brain’s default mode network', cite:'Raichle (2015) Annu. Rev. Neurosci.', link:'https://doi.org/10.1146/annurev-neuro-071013-014030' },
+      damasio1994: { title:'Somatic marker hypothesis and decision-making', cite:'Damasio (1994) Descartes’ Error', link:'https://doi.org/10.1515/9781400820793' },
+      price2012: { title:'The anatomy of language: a review of 100 fMRI studies', cite:'Price (2012) J. Anat.', link:'https://doi.org/10.1111/j.1469-7580.2012.01500.x' },
+      schmahmann2019: { title:'The cerebellum and cognition', cite:'Schmahmann (2019) Neurosci. Lett.', link:'https://doi.org/10.1016/j.neulet.2018.07.005' }
+    };
+
+    let nodeRefs = {
+      dlPFC:['miller2001'],
+      ACC:['miller2001','menon2010'],
+      Insula:['menon2010'],
+      Amygdala:['menon2010'],
+      Hippocampus:['raichle2015'],
+      mPFC:['raichle2015'],
+      PCC:['raichle2015'],
+      Thalamus:['menon2010'],
+      Broca:['price2012'],
+      Wernicke:['price2012'],
+      Cerebellum:['schmahmann2019'],
+      Motor:['schmahmann2019']
+    };
+
+    let categoryRefs = {
+      attention:['miller2001','menon2010'],
+      emotion:['menon2010','damasio1994'],
+      memory:['raichle2015'],
+      creativity:['raichle2015'],
+      decision:['damasio1994','miller2001'],
+      language:['price2012'],
+      motivation:['schmahmann2019'],
+      social:['menon2010']
+    };
+
+    function openEvidence(keys, subject){
+      if(!evidenceModal) return;
+      const items = Array.isArray(keys) ? keys.filter(Boolean) : [];
+      evidenceTitle.textContent = `Evidence: ${subject}`;
+      if(!items.length){
+        evidenceBody.innerHTML = '<p>No curated sources yet—check back soon.</p>';
+      } else {
+        const list = items.map(key=>{
+          const entry = bib[key];
+          if(!entry) return `<li>${key}</li>`;
+          const link = entry.link ? `<a href="${entry.link}" target="_blank" rel="noreferrer">${entry.cite}</a>` : entry.cite;
+          return `<li><strong>${entry.title}</strong><br>${link}</li>`;
+        }).join('');
+        evidenceBody.innerHTML = `<ol>${list}</ol>`;
+      }
+      evidenceModal.showModal();
+    }
 
     let currentRegion = null;
     let currentNode = null;
@@ -599,30 +708,34 @@
     const nodesLayer = document.getElementById('nodes');
     const pathLayer = document.getElementById('pathLayer');
 
-    for(const [id, node] of Object.entries(atlas.nodes)){
-      node.x0 = node.x;
-      node.y0 = node.y;
-      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-      g.setAttribute('class','node');
-      g.setAttribute('data-id', id);
-      g.setAttribute('tabindex','0');
-      g.setAttribute('role','button');
-      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-      c.setAttribute('class','dot');
-      c.setAttribute('cx', node.x);
-      c.setAttribute('cy', node.y);
-      c.setAttribute('r','6');
-      c.setAttribute('stroke', node.color);
-      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-      t.setAttribute('x', node.x + 10);
-      t.setAttribute('y', node.y + 4);
-      t.textContent = node.label;
-      g.appendChild(c);
-      g.appendChild(t);
-      g.addEventListener('click', ()=> selectNode(id));
-      g.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectNode(id);} });
-      nodesLayer.appendChild(g);
+    function rebuildNodes(){
+      nodesLayer.innerHTML = '';
+      const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+      for(const [id, n] of Object.entries(atlas.nodes)){
+        n.x0 = n.x; n.y0 = n.y;
+        const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+        g.setAttribute('class','node');
+        g.setAttribute('data-id', id);
+        const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        c.setAttribute('class','dot'); c.setAttribute('cx', n.x); c.setAttribute('cy', n.y);
+        c.setAttribute('r', isCoarse? '10' : '6');
+        c.setAttribute('fill', 'var(--glass)');
+        c.setAttribute('stroke', n.color || 'var(--teal)');
+        const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+        t.setAttribute('x', n.x + (isCoarse? 14 : 10));
+        t.setAttribute('y', n.y + (isCoarse? 6 : 4));
+        if(isCoarse) t.setAttribute('font-size','14');
+        t.textContent = n.label || id;
+        g.appendChild(c); g.appendChild(t); nodesLayer.appendChild(g);
+      }
+      $$('#nodes .node').forEach(el=>{
+        el.addEventListener('click', ()=> selectNode(el.getAttribute('data-id')));
+        el.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectNode(el.getAttribute('data-id')); } });
+        el.setAttribute('tabindex','0'); el.setAttribute('role','button');
+      });
+      updateNetworkVisibility?.();
     }
+    rebuildNodes();
 
     const modeSel = document.getElementById('mode');
     const feelingSel = document.getElementById('feeling');
@@ -714,18 +827,20 @@
     }
 
     function selectNode(id){
-      const node = atlas.nodes[id];
-      if(!node) return;
       currentNode = id;
-      currentRegion = null;
       $$('#regions .region').forEach(el=>el.classList.remove('active'));
-      $$('#nodes .node').forEach(el=>el.classList.toggle('active', el.getAttribute('data-id')===id));
-      panelTitle.textContent = node.name;
-      panelDesc.textContent = `${node.desc} (${node.lobe}; networks: ${node.networks.join(', ')})`;
-      tryBtn.disabled = false;
-      focusBtn.disabled = false;
+      $$('#nodes .node').forEach(g=>g.classList.toggle('active', g.getAttribute('data-id')===id));
+      const n = atlas.nodes[id];
+      panelTitle.textContent = n.name;
+      panelDesc.textContent = `${n.desc} (${n.lobe}; networks: ${n.networks.join(', ')})`;
+      tryBtn.disabled = false; focusBtn.disabled = false; pulseAtRegion('attention');
       drawPath([id]);
       setHotspots([id]);
+      if(showEvBtn){
+        const refs = nodeRefs[id] || [];
+        showEvBtn.disabled = refs.length===0;
+        showEvBtn.onclick = refs.length ? ()=> openEvidence(refs, n.name) : null;
+      }
     }
 
     const regionCenters = {
@@ -755,20 +870,14 @@
     }
 
     function selectRegion(id){
-      const data = regions[id];
-      if(!data) return;
       currentRegion = id;
-      currentNode = null;
-      $$('#regions .region').forEach(g=>g.classList.toggle('active', g.id===id));
-      $$('#nodes .node').forEach(node=>node.classList.remove('active'));
+      $$('.region').forEach(g=>g.classList.toggle('active', g.id===id));
+      const data = regions[id];
       panelTitle.textContent = data.title;
-      panelDesc.textContent = data.desc;
-      tryBtn.disabled = false;
-      focusBtn.disabled = false;
-      const list = categoryToNodes[id] || [];
-      drawPath(list);
-      setHotspots(list);
+      panelDesc.textContent = `${data.desc}`;
+      tryBtn.disabled = false; focusBtn.disabled = false;
       pulseAtRegion(id);
+      highlightCategoryNodes(id);
     }
 
     $$('#regions .region').forEach(g=>{
@@ -812,6 +921,7 @@
         drawPath(null);
         panelTitle.textContent = 'Feeling → Pathway';
         panelDesc.textContent = 'Choose a feeling to visualize a typical brain pathway (schematic).';
+        if(showEvBtn){ showEvBtn.disabled = true; showEvBtn.onclick = null; }
       } else {
         feelingSel.disabled = true;
         feelingSel.value = '';
@@ -824,6 +934,7 @@
           panelTitle.textContent = 'Anatomy view';
           panelDesc.textContent = 'Click a node to learn its role and see matching micro-practices.';
         }
+        if(showEvBtn){ showEvBtn.disabled = true; showEvBtn.onclick = null; }
       }
     });
 
@@ -840,13 +951,25 @@
         tryBtn.disabled = false;
         focusBtn.disabled = false;
         setHotspots(sequence);
+        if(showEvBtn){ showEvBtn.disabled = true; showEvBtn.onclick = null; }
       }
     });
 
     function highlightCategoryNodes(key){
       const list = categoryToNodes[key] || [];
+      currentRegion = key;
+      currentNode = null;
+      $$('#regions .region').forEach(g=>g.classList.toggle('active', g.id===key));
+      $$('#nodes .node').forEach(node=>node.classList.remove('active'));
       drawPath(list);
       setHotspots(list);
+      tryBtn.disabled = false;
+      focusBtn.disabled = false;
+      if(showEvBtn){
+        const refs = categoryRefs[key] || [];
+        showEvBtn.disabled = refs.length===0;
+        showEvBtn.onclick = refs.length ? ()=> openEvidence(refs, regions[key]?.title || key) : null;
+      }
     }
 
     const tourOrder = ['emotion','memory','attention','creativity','decision','language','social','motivation'];
@@ -874,25 +997,82 @@
       el.addEventListener('input', ()=>{ out.textContent = el.value; });
     });
 
-    function computeScores(){
+    function analyze(){
       const scores = { emotion:0, memory:0, attention:0, creativity:0, decision:0, language:0, social:0, motivation:0 };
       sliders.forEach(s=>{
-        const value = parseInt(document.getElementById(s.id).value,10);
-        Object.entries(s.weight).forEach(([key, weight])=>{ scores[key] += value * weight; });
+        const v = parseInt(document.getElementById(s.id).value,10);
+        for(const key in s.weight){ scores[key] += v * s.weight[key]; }
       });
-      return scores;
-    }
+      const best = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+      panelTitle.textContent = regions[best].title;
+      panelDesc.textContent = regions[best].desc || 'Suggested focus based on your self-scan.';
+      document.getElementById('scanResult').textContent = `Focus suggestion: ${regions[best].title}. Open the 2-minute practice.`;
+      highlightCategoryNodes(best);
+      pulseAtRegion(best);
 
-    function analyze(){
-      const scores = computeScores();
-      const [bestKey] = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
-      selectRegion(bestKey);
-      highlightCategoryNodes(bestKey);
-      const phrase = regions[bestKey].title;
-      document.getElementById('scanResult').textContent = `Focus suggestion: ${phrase}. Open the 2‑minute practice to shift state now.`;
+      // save short history for sparkline
+      const entry = {
+        t: Date.now(),
+        mood: +document.getElementById('mood').value,
+        mem: +document.getElementById('mem').value,
+        focus: +document.getElementById('focus').value,
+        stress: +document.getElementById('stress').value,
+        create: +document.getElementById('create').value,
+        best
+      };
+      const hist = JSON.parse(localStorage.getItem('nm_history')||'[]');
+      hist.push(entry); while(hist.length>50) hist.shift();
+      localStorage.setItem('nm_history', JSON.stringify(hist));
+      drawSpark();
       window.location.hash = '#map';
     }
     document.getElementById('analyze').addEventListener('click', analyze);
+
+    function drawSpark(){
+      const canvas = document.getElementById('sparkline');
+      if(!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const width = canvas.clientWidth || canvas.width;
+      const height = canvas.clientHeight || canvas.height;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      const hist = JSON.parse(localStorage.getItem('nm_history')||'[]');
+      ctx.clearRect(0,0,width,height);
+      if(!hist.length){
+        if(sparkLabel) sparkLabel.textContent = 'No history yet';
+        return;
+      }
+      const keys = Object.keys(regions);
+      const step = hist.length>1 ? width/(hist.length-1) : 0;
+      ctx.strokeStyle = 'rgba(122,162,255,0.7)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      hist.forEach((item,i)=>{
+        const idx = Math.max(0, keys.indexOf(item.best));
+        const ratio = keys.length>1 ? idx/(keys.length-1) : 0.5;
+        const x = i*step;
+        const y = height - ratio*height;
+        if(i===0){ ctx.moveTo(x,y); } else { ctx.lineTo(x,y); }
+      });
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(42,208,202,0.85)';
+      hist.forEach((item,i)=>{
+        const idx = Math.max(0, keys.indexOf(item.best));
+        const ratio = keys.length>1 ? idx/(keys.length-1) : 0.5;
+        const x = i*step;
+        const y = height - ratio*height;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI*2);
+        ctx.fill();
+      });
+      if(sparkLabel){
+        const latest = hist[hist.length-1];
+        sparkLabel.textContent = `Last focus: ${regions[latest.best]?.title || latest.best}`;
+      }
+    }
+    drawSpark();
 
     const subEmail = document.getElementById('subEmail');
     const subBtn = document.getElementById('subBtn');
@@ -929,8 +1109,12 @@
     }
 
     function computeBest(){
-      const scores = computeScores();
-      return Object.entries(scores).sort((a,b)=>b[1]-a[1])[0][0];
+      const totals = { emotion:0, memory:0, attention:0, creativity:0, decision:0, language:0, social:0, motivation:0 };
+      sliders.forEach(s=>{
+        const v = parseInt(document.getElementById(s.id).value,10);
+        for(const key in s.weight){ totals[key] += v * s.weight[key]; }
+      });
+      return Object.entries(totals).sort((a,b)=>b[1]-a[1])[0][0];
     }
 
     function timestamp(){
@@ -1102,10 +1286,27 @@
     Object.entries(netChecks).forEach(([key, el])=>{
       el?.addEventListener('change', ()=>{ netFilters[key] = el.checked; updateNetworkVisibility(); });
     });
-    document.getElementById('toggleLobes')?.addEventListener('change', e=>{
+
+    async function loadAtlas(){
+      try{
+        const res = await fetch('atlas.json', {cache:'no-store'});
+        if(!res.ok) return;
+        const data = await res.json();
+        if(data.nodes){ atlas.nodes = Object.assign(atlas.nodes, data.nodes); }
+        if(data.networks){ atlas.networks = Object.assign(atlas.networks, data.networks); }
+        if(data.feelings){ atlas.feelings = Object.assign(atlas.feelings, data.feelings); }
+        if(data.bib){ Object.assign(bib, data.bib); }
+        if(data.refsByNode){ nodeRefs = Object.assign({}, nodeRefs, data.refsByNode); }
+        if(data.refsByCategory){ categoryRefs = Object.assign({}, categoryRefs, data.refsByCategory); }
+        rebuildNodes();
+      }catch(e){ /* silent */ }
+    }
+
+    document.getElementById('toggleLobes')?.addEventListener('change', (e)=>{
       document.getElementById('lobes').classList.toggle('hidden', !e.target.checked);
     });
     updateNetworkVisibility();
+    loadAtlas();
 
     function setHemisphere(side){
       currentHemisphere = side;
@@ -1184,22 +1385,60 @@
         applyTransform();
       });
 
+      // Touch gestures: 1-finger pan, 2-finger pinch zoom
+      let tStartDist=0, tStartOx=0, tStartOy=0, tStartZoom=1, tStartCx=0, tStartCy=0;
+      function dist(a,b){ const dx=a.clientX-b.clientX, dy=a.clientY-b.clientY; return Math.hypot(dx,dy); }
+      function center(a,b){ return {x:(a.clientX+b.clientX)/2, y:(a.clientY+b.clientY)/2}; }
+
+      box.addEventListener('touchstart', (e)=>{
+        if(e.touches.length===1){ panning=true; px=e.touches[0].clientX; py=e.touches[0].clientY; }
+        if(e.touches.length===2){
+          e.preventDefault();
+          const c=center(e.touches[0], e.touches[1]);
+          const r = box.getBoundingClientRect();
+          tStartCx=c.x - r.left; tStartCy=c.y - r.top;
+          tStartDist=dist(e.touches[0], e.touches[1]);
+          tStartOx=ox; tStartOy=oy; tStartZoom=zoom;
+        }
+      }, {passive:false});
+
+      box.addEventListener('touchmove', (e)=>{
+        if(e.touches.length===1 && panning){
+          e.preventDefault();
+          ox += (e.touches[0].clientX - px);
+          oy += (e.touches[0].clientY - py);
+          px=e.touches[0].clientX; py=e.touches[0].clientY;
+          applyTransform();
+        }
+        if(e.touches.length===2){
+          e.preventDefault();
+          const d=dist(e.touches[0], e.touches[1]); const k=d/tStartDist;
+          zoom = Math.max(0.5, Math.min(3, tStartZoom * k));
+          ox = tStartCx - (tStartCx - tStartOx) * k;
+          oy = tStartCy - (tStartCy - tStartOy) * k;
+          applyTransform();
+        }
+      }, {passive:false});
+
+      box.addEventListener('touchend', ()=>{ panning=false; }, {passive:true});
+
       document.getElementById('zoomIn')?.addEventListener('click', ()=>{ zoom*=1.1; applyTransform(); });
       document.getElementById('zoomOut')?.addEventListener('click', ()=>{ zoom*=0.9; applyTransform(); });
       document.getElementById('zoomReset')?.addEventListener('click', ()=>{ zoom=1; ox=0; oy=0; applyTransform(); });
 
-      let neurons=[]; const N=140; let sx=1, sy=1; const GRID=60; let grid={};
+      let neurons=[]; let N=120; let sx=1, sy=1; let grid={}; const GRID=60;
+      const isCoarse = window.matchMedia('(pointer: coarse)').matches;
       function resize(){
         const rect = canvas.getBoundingClientRect();
         W = canvas.clientWidth; H = canvas.clientHeight;
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
         ctx.setTransform(dpr,0,0,dpr,0,0);
-        sx = rect.width / vb.width;
-        sy = rect.height / vb.height;
-        if(!neurons.length){
-          for(let i=0;i<N;i++) neurons.push(spawnNeuron());
-        }
+        sx = W / vb.width;
+        sy = H / vb.height;
+        N = Math.max(60, Math.min(160, Math.round((W*H)/(isCoarse? 18000 : 12000))));
+        if(neurons.length < N){ for(let i=neurons.length;i<N;i++) neurons.push(spawnNeuron()); }
+        if(neurons.length > N){ neurons.length = N; }
       }
 
       function inBrain(u,v){
